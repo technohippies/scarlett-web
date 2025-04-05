@@ -1,7 +1,7 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import path from "path";
-import tailwindcss from "@tailwindcss/vite";
 import { mergeConfig } from 'vite';
+import tailwindcss from 'tailwindcss';
 
 const config: StorybookConfig = {
   "stories": [
