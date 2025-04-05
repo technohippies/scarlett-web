@@ -1,7 +1,6 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import path from "path";
 import { mergeConfig } from 'vite';
-import tailwindcss from 'tailwindcss';
 
 const config: StorybookConfig = {
   "stories": [
@@ -25,8 +24,6 @@ const config: StorybookConfig = {
       optimizeDeps: {
         include: ['storybook-dark-mode'],
       },
-      // Add TailwindCSS plugin
-      plugins: [tailwindcss()],
       // Add alias resolution
       resolve: {
         alias: {
