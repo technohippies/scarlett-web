@@ -17,19 +17,20 @@ const config: StorybookConfig = {
     "name": "@storybook/react-vite",
     "options": {}
   },
-  async viteFinal(config, { configType }) {
+  async viteFinal(config) {
     // Merge custom configuration into the default Vite config
     return mergeConfig(config, {
-      // Add dependencies to pre-bundle
-      optimizeDeps: {
-        include: ['storybook-dark-mode'],
-      },
       // Add alias resolution
       resolve: {
         alias: {
           "@": path.resolve(__dirname, "../src"),
         },
       },
+      css: {
+        postcss: {
+          // Let Vite handle PostCSS with the project's config
+        }
+      }
     });
   },
 };

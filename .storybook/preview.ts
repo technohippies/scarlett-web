@@ -1,41 +1,35 @@
 import type { Preview } from '@storybook/react'
 import '../src/index.css'; // Import global styles
-import { themes } from '@storybook/theming';
 
-// Force dark mode on preview
-const withDarkMode = (Story) => {
-  // Add dark class to document element
-  if (typeof document !== 'undefined') {
-    document.documentElement.classList.add('dark');
-  }
-  return Story();
-};
-
+/**
+ * Dark theme only configuration
+ * All stories will be forced to dark mode
+ */
 const preview: Preview = {
-  decorators: [withDarkMode],
   parameters: {
+    backgrounds: {
+      default: 'dark',
+      values: [
+        { name: 'dark', value: '#121212' }
+      ]
+    },
     controls: {
       matchers: {
        color: /(background|color)$/i,
        date: /Date$/i,
       },
     },
-    darkMode: {
-      // Set dark mode as the default and only option
-      current: 'dark',
-      // Dark theme with neutral background
-      dark: { ...themes.dark, appBg: '#262626', appContentBg: '#262626' },
-      // Apply dark class to the html element
-      darkClass: 'dark',
-      stylePreview: true,
-    },
-    backgrounds: {
-      default: 'dark',
-      values: [
-        { name: 'dark neutral', value: '#262626' } // Neutral 800 equivalent
-      ]
-    }
   },
+  decorators: [
+    (Story) => {
+      // Force dark theme by adding dark class to document
+      if (typeof document !== 'undefined') {
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('dark');
+      }
+      return Story();
+    },
+  ],
 };
 
 export default preview;
