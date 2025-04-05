@@ -2,7 +2,14 @@ import type { Preview } from '@storybook/react'
 import '../src/index.css'; // Import global styles
 import { themes } from '@storybook/theming';
 
+// Force dark mode on the preview iframe
+const withDarkMode = (Story) => {
+  document.documentElement.classList.add('dark');
+  return Story();
+};
+
 const preview: Preview = {
+  decorators: [withDarkMode],
   parameters: {
     controls: {
       matchers: {
@@ -25,6 +32,13 @@ const preview: Preview = {
       // Apply dark/light class to preview iframe
       stylePreview: true,
     },
+    backgrounds: {
+      default: 'dark',
+      values: [
+        { name: 'dark', value: 'hsl(222.2 84% 4.9%)' },
+        { name: 'light', value: 'hsl(0 0% 100%)' }
+      ]
+    }
   },
 };
 
