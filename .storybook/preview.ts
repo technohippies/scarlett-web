@@ -19,17 +19,7 @@ const preview: Preview = {
        date: /Date$/i,
       },
     },
-  },
-  decorators: [
-    (Story) => {
-      // Force dark theme by adding dark class to document
-      if (typeof document !== 'undefined') {
-        document.documentElement.classList.add('dark');
-        document.body.classList.add('dark');
-      }
-      return Story();
-    },
-  ],
+  }
 };
 
 export default preview;

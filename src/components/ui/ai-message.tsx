@@ -13,12 +13,6 @@ import {
 } from "@phosphor-icons/react"
 import { IconButton } from "@/components/ui/icon-button"
 import { Button } from "@/components/ui/button"
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetTrigger, 
-  SheetDescription 
-} from "@/components/ui/sheet"
 import { IntroSheet } from "@/components/ui/intro-sheet"
 
 // Custom spin animation style
@@ -90,9 +84,6 @@ export function AIMessage({
 }: AIMessageProps) {
   const [audioStatus, setAudioStatus] = useState<'idle' | 'loading' | 'playing' | 'paused' | 'ready'>('idle')
   const [speed, setSpeed] = useState<1 | 0.7 | 0.5>(1)
-  const [activeExplanation, setActiveExplanation] = useState<string | null>(null)
-  const [activeHighlightIndex, setActiveHighlightIndex] = useState<number | null>(null)
-  // const audioRef = useRef<HTMLAudioElement | null>(null)
 
   // Handle audio playback
   const handleAudioPlay = async () => {
@@ -173,7 +164,6 @@ export function AIMessage({
             trigger={
               <span 
                 className="text-yellow-300 font-medium cursor-pointer hover:underline"
-                onClick={() => setActiveHighlightIndex(i)}
               >
                 {highlightText}
               </span>
