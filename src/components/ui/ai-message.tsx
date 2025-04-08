@@ -10,14 +10,16 @@ import {
   Pause, 
   Spinner,
   Question
-} from "phosphor-react"
+} from "@phosphor-icons/react"
 import { IconButton } from "@/components/ui/icon-button"
+import { Button } from "@/components/ui/button"
 import { 
   Sheet, 
   SheetContent, 
   SheetTrigger, 
   SheetDescription 
 } from "@/components/ui/sheet"
+import { IntroSheet } from "@/components/ui/intro-sheet"
 
 // Custom spin animation style
 const spinAnimation = `
@@ -56,9 +58,22 @@ export interface AIMessageProps extends React.HTMLAttributes<HTMLDivElement>,
     text: string
     explanation: string
   }[]
+  introSheet?: {
+    titleEn: string
+    titleZh: string
+    contentItems: {
+      icon: 'info' | 'note'
+      text: string
+    }[]
+    onPlayAudio?: () => void
+  }
   onPlayAudio?: () => Promise<void>
   onSpeedChange?: (speed: 1 | 0.7 | 0.5) => void
   onHelp?: () => void
+  surveyButtons?: {
+    text: string
+    onClick: () => void
+  }[]
 }
 
 export function AIMessage({
@@ -66,15 +81,17 @@ export function AIMessage({
   variant,
   text,
   highlights = [],
+  introSheet,
   onPlayAudio,
   onSpeedChange,
   onHelp,
+  surveyButtons = [],
   ...props
 }: AIMessageProps) {
   const [audioStatus, setAudioStatus] = useState<'idle' | 'loading' | 'playing' | 'paused' | 'ready'>('idle')
   const [speed, setSpeed] = useState<1 | 0.7 | 0.5>(1)
   const [activeExplanation, setActiveExplanation] = useState<string | null>(null)
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const [activeHighlightIndex, setActiveHighlightIndex] = useState<number | null>(null)
   // const audioRef = useRef<HTMLAudioElement | null>(null)
 
   // Handle audio playback
@@ -146,23 +163,39 @@ export function AIMessage({
           );
         }
         
-        // Add the highlighted text
+        // Format the title - capitalize first letter
+        const formattedTitle = highlightText.charAt(0).toUpperCase() + highlightText.slice(1);
+        
+        // Add the highlighted text with complete IntroSheet
         segments.push(
-          <Sheet key={`highlight-${i}`} open={sheetOpen && activeExplanation === highlight.explanation} onOpenChange={setSheetOpen}>
-            <SheetTrigger asChild>
+          <IntroSheet
+            key={`highlight-${i}`}
+            trigger={
               <span 
                 className="text-yellow-300 font-medium cursor-pointer hover:underline"
-                onClick={() => setActiveExplanation(highlight.explanation)}
+                onClick={() => setActiveHighlightIndex(i)}
               >
                 {highlightText}
               </span>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="bg-neutral-900 text-neutral-100 border-t border-neutral-800/50 rounded-t-lg">
-              <SheetDescription className="text-neutral-300 text-base">
-                {highlight.explanation}
-              </SheetDescription>
-            </SheetContent>
-          </Sheet>
+            }
+            titleEn={formattedTitle}
+            titleZh="英语语法点"
+            contentItems={[
+              {
+                icon: 'info',
+                text: highlight.explanation
+              },
+              {
+                icon: 'note',
+                text: "Try using this in your own sentences for practice."
+              }
+            ]}
+            onPlayAudio={() => {
+              if (onPlayAudio) {
+                handleAudioPlay();
+              }
+            }}
+          />
         );
         
         lastIndex = index + highlightText.length;
@@ -199,6 +232,28 @@ export function AIMessage({
     }
   };
 
+  // Render survey buttons if provided
+  const renderSurveyButtons = () => {
+    if (!surveyButtons || surveyButtons.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="flex flex-col space-y-2 mt-4 w-full max-w-xs">
+        {surveyButtons.map((button, index) => (
+          <Button
+            key={`survey-button-${index}`}
+            variant="outline"
+            onClick={button.onClick}
+            className="justify-start text-left"
+          >
+            {button.text}
+          </Button>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className={cn("flex flex-col space-y-2 rounded-md", className)} {...props}>
       {/* Message text */}
@@ -206,13 +261,25 @@ export function AIMessage({
         {renderTextWithHighlights()}
       </div>
       
+      {/* Survey buttons */}
+      {renderSurveyButtons()}
+      
       {/* Action buttons */}
       <div className="flex items-center space-x-4 mt-2">
-        <IconButton
-          icon={renderAudioIcon()}
-          onClick={handleAudioPlay}
-          disabled={audioStatus === 'loading'}
-        />
+        {introSheet ? (
+          <IntroSheet 
+            trigger={<IconButton icon={<Question size={20} />} />}
+            titleEn={introSheet.titleEn}
+            titleZh={introSheet.titleZh}
+            contentItems={introSheet.contentItems}
+            onPlayAudio={introSheet.onPlayAudio}
+          />
+        ) : (
+          <IconButton
+            icon={<Question size={20} />}
+            onClick={onHelp}
+          />
+        )}
         
         <IconButton
           icon={<span className="text-sm font-medium">{speed === 1 ? "1x" : speed === 0.7 ? ".7x" : ".5x"}</span>}
@@ -220,8 +287,9 @@ export function AIMessage({
         />
         
         <IconButton
-          icon={<Question size={20} />}
-          onClick={onHelp}
+          icon={renderAudioIcon()}
+          onClick={handleAudioPlay}
+          disabled={audioStatus === 'loading'}
         />
       </div>
     </div>

@@ -1,0 +1,33 @@
+{
+  "tutor": {
+    "id": "default_tutor",
+    "name": "Scarlett",
+    "displayName": "Scarlett 英语导师",
+    "description": "Your personal English language tutor",
+    "thumb": "/tutor/thumb.png",
+    "cover": "/tutor/cover.png",
+    "url": "/"
+  },
+  "roleplays": [
+    {
+      "id": "movie_night_1",
+      "title": "Movie Date Night",
+      "description": "Practice casual conversation about movies and making plans for a date.",
+      "thumb": "/roleplays/movie_night_1/thumb.png",
+      "cover": "/roleplays/movie_night_1/cover.png",
+      "url": "/roleplay/movie_night_1",
+      "difficulty": "intermediate",
+      "tags": ["casual", "dating", "entertainment"]
+    },
+    {
+      "id": "coffee_encounter_1",
+      "title": "Coffee Shop Encounter",
+      "description": "Practice casual conversation and ordering at a coffee shop.",
+      "thumb": "/roleplays/coffee_encounter_1/thumb.png",
+      "cover": "/roleplays/coffee_encounter_1/cover.png", 
+      "url": "/roleplay/coffee_encounter_1",
+      "difficulty": "beginner",
+      "tags": ["casual", "coffee shop", "conversation"]
+    }
+  ]
+} 

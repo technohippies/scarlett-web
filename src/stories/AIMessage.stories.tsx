@@ -29,6 +29,12 @@ const meta = {
     highlights: {
       control: 'object',
     },
+    introSheet: {
+      control: 'object',
+    },
+    surveyButtons: {
+      control: 'object',
+    },
   },
   args: {
     text: "This is an AI message that explains how to use the past tense in English.",
@@ -62,6 +68,30 @@ export const WithHighlights: Story = {
   }
 };
 
+export const WithSurveyButtons: Story = {
+  args: {
+    text: "How comfortable do you feel with using the present perfect tense in English?",
+    surveyButtons: [
+      {
+        text: "I feel very comfortable using it",
+        onClick: fn()
+      },
+      {
+        text: "I understand it but sometimes make mistakes",
+        onClick: fn()
+      },
+      {
+        text: "I find it confusing but can recognize it",
+        onClick: fn()
+      },
+      {
+        text: "I'm not familiar with this tense at all",
+        onClick: fn()
+      }
+    ]
+  }
+};
+
 export const Loading: Story = {
   args: {
     text: "This example shows the loading spinner animation that appears when generating audio.",
@@ -87,7 +117,7 @@ export const AudioReady: Story = {
 
 export const SpeedChanges: Story = {
   args: {
-    text: "Click the 1x button to change playback speed between 1x, 0.7x, and 0.5x.",
+    text: "Click the 1x button to change playback speed between 1x, .7x, and .5x.",
   },
   play: async ({ canvasElement }) => {
     // Find and click the speed button to cycle through speeds

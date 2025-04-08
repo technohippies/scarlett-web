@@ -7,7 +7,7 @@ import {
   Question,
   Plus,
   Trash
-} from "phosphor-react"
+} from "@phosphor-icons/react"
 
 const meta = {
   title: 'UI/IconButton',

@@ -1,7 +1,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
-import { List, X, CaretLeft, Cards, Brain } from "phosphor-react"
+import { List, X, CaretLeft, Cards, Brain } from "@phosphor-icons/react"
 
 const headerVariants = cva(
   "flex items-center justify-between w-full relative",
