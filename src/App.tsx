@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Hero } from "@/components/layout/Hero";
-import { DecksPanel, Deck } from "@/components/layout/DecksPanel";
+import { DecksPage, Deck } from "@/components/pages/DecksPage";
 import React, { useState, useEffect, useCallback } from "react";
 import { authService, AuthResult } from "@/services/AuthService";
 import { fetchAllDecks } from "@/services/TablelandService";
@@ -223,7 +223,7 @@ function App() {
               {isLoadingDecks ? (
                 <div>Loading Decks...</div>
               ) : (
-                <DecksPanel decks={decks} />
+                <DecksPage decks={decks} />
               )}
             </div>
           )}

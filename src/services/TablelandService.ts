@@ -1,4 +1,4 @@
-import type { Deck } from "@/components/layout/DecksPanel"; // Import Deck type if needed
+import type { Deck } from "@/components/pages/DecksPage"; // Update import path for Deck type
 
 const TABLELAND_BASE_URL = 'https://testnets.tableland.network/api/v1/query?statement=';
 // Use the exact name from your example

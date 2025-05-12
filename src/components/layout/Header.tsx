@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
-import { Plus, MagnifyingGlass, Cards } from "@phosphor-icons/react"
+import { Plus, Cards } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import reactLogo from "@/assets/react.svg"
 import {

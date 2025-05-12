@@ -25,7 +25,7 @@ export interface Deck {
   updated_at: string;
 }
 
-export interface DecksPanelProps {
+export interface DecksPageProps { // Renamed from DecksPanelProps
   decks: Deck[];
 }
 
@@ -47,7 +47,7 @@ function getLanguageName(code: string): string {
   return languageMap[code.toLowerCase()] || code; // Return code if not found
 }
 
-export const DecksPanel: React.FC<DecksPanelProps> = ({ decks = [] }) => {
+export const DecksPage: React.FC<DecksPageProps> = ({ decks = [] }) => { // Renamed from DecksPanel
   return (
     <div className="w-full">
       <h2 className="text-2xl font-semibold mb-4">Shared Decks</h2>
@@ -91,4 +91,4 @@ export const DecksPanel: React.FC<DecksPanelProps> = ({ decks = [] }) => {
   );
 };
 
-export default DecksPanel; 
+export default DecksPage; // Renamed from DecksPanel 

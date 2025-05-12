@@ -1,11 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { DecksPanel, Deck } from "@/components/layout/DecksPanel"; // Adjusted import path
+// Update import path and component name
+import { DecksPage, Deck } from "@/components/pages/DecksPage"; 
 
 const meta = {
-  title: "Layout/DecksPanel", 
-  component: DecksPanel,
+  // Update title and component reference
+  title: "Pages/DecksPage", 
+  component: DecksPage,
   parameters: {
-    layout: "padded", // Or 'fullscreen' or 'centered' depending on the component
+    layout: "padded", 
     backgrounds: {
       default: "dark",
       values: [
@@ -18,7 +20,7 @@ const meta = {
   argTypes: {
     decks: { control: "object" },
   },
-} satisfies Meta<typeof DecksPanel>;
+} satisfies Meta<typeof DecksPage>; // Update component reference
 
 export default meta;
 
