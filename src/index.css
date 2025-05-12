@@ -19,8 +19,8 @@
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(0.35 0 0);
+  --input: oklch(0.4 0 0);
   --ring: oklch(0.556 0 0);
   
   --radius: 0.5rem;
@@ -43,4 +43,17 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
+  /* Remove opinionated global styles below */
+  /* text-align: center; */
+  /* margin-inline: auto; */
+  /* max-width: var(--container-3xl); */ 
+  /* font-size: var(--text-xl); */
+  /* line-height: var(--tw-leading, var(--text-xl--line-height)); */
+}
+
+/* Ensure select dropdown has proper background and border */
+[data-radix-select-content] {
+  background-color: var(--popover) !important;
+  border-color: var(--border) !important;
+  width: var(--radix-select-trigger-width) !important;
 } 
