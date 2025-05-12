@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Link } from "react-router-dom"; // Import Link
 import {
   Table,
   TableHeader,
@@ -11,6 +12,7 @@ import {
 // Define the structure of a single deck based on the tableland data
 export interface Deck {
   id: number;
+  row_id: number;
   owner_address: string;
   deck_slug: string;
   name: string;
@@ -27,6 +29,8 @@ export interface Deck {
 
 export interface DecksPageProps { // Renamed from DecksPanelProps
   decks: Deck[];
+  // onSelectDeck is no longer needed, navigation handled by Link
+  // onSelectDeck: (deckSlug: string) => void; 
 }
 
 function truncateAddress(address?: string) {
@@ -47,7 +51,7 @@ function getLanguageName(code: string): string {
   return languageMap[code.toLowerCase()] || code; // Return code if not found
 }
 
-export const DecksPage: React.FC<DecksPageProps> = ({ decks = [] }) => { // Renamed from DecksPanel
+export const DecksPage: React.FC<DecksPageProps> = ({ decks = [] }) => {
   return (
     <div className="w-full">
       <h2 className="text-2xl font-semibold mb-4">Shared Decks</h2>
@@ -55,6 +59,7 @@ export const DecksPage: React.FC<DecksPageProps> = ({ decks = [] }) => { // Rena
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
+            <TableHead>Description</TableHead>
             <TableHead className="w-[120px]">Language</TableHead>
             <TableHead className="w-[150px]">Target Language</TableHead>
             <TableHead className="w-[150px] text-right">Owner</TableHead>
@@ -65,9 +70,15 @@ export const DecksPage: React.FC<DecksPageProps> = ({ decks = [] }) => { // Rena
             decks.map((deck) => (
               <TableRow key={deck.id}>
                 <TableCell className="font-medium">
-                  <a href="#" className="text-blue-500 hover:underline">
+                  <Link 
+                    to={`/decks/${deck.deck_slug}`} 
+                    className="text-blue-500 hover:underline"
+                  >
                     {deck.name}
-                  </a>
+                  </Link>
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground truncate max-w-xs">
+                    {deck.description}
                 </TableCell>
                 <TableCell>{getLanguageName(deck.front_language)}</TableCell>
                 <TableCell>{getLanguageName(deck.back_language)}</TableCell>
@@ -80,7 +91,7 @@ export const DecksPage: React.FC<DecksPageProps> = ({ decks = [] }) => { // Rena
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={4} className="h-24 text-center">
+              <TableCell colSpan={5} className="h-24 text-center">
                 No decks found.
               </TableCell>
             </TableRow>

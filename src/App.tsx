@@ -2,9 +2,76 @@ import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Hero } from "@/components/layout/Hero";
 import { DecksPage, Deck } from "@/components/pages/DecksPage";
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { authService, AuthResult } from "@/services/AuthService";
-import { fetchAllDecks } from "@/services/TablelandService";
+import { fetchAllDecks, fetchDeckBySlug, fetchCardsForDeck } from "@/services/TablelandService";
+import { DeckDetailPage, Flashcard } from "@/components/pages/DeckDetailsPage";
+import { Routes, Route, useParams } from 'react-router-dom';
+import { Spinner } from '@/components/ui/Spinner';
+
+const AddDeckPage = () => <div><h2>Add New Deck (Placeholder)</h2></div>;
+
+const DeckDetailsDataLoader = () => {
+  const { deckSlug } = useParams<{ deckSlug: string }>();
+  const [deck, setDeck] = useState<Deck | null>(null);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadDeckData = async () => {
+      if (!deckSlug) {
+        setError("Deck slug is missing.");
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+      console.log(`[DeckDetailsDataLoader] Fetching data for slug: ${deckSlug}`);
+      try {
+        // TODO: Implement fetchDeckBySlug in TablelandService
+        const fetchedDeck = await fetchDeckBySlug(deckSlug); 
+        if (!fetchedDeck) {
+            throw new Error(`Deck with slug '${deckSlug}' not found.`);
+        }
+        console.log(`[DeckDetailsDataLoader] Fetched deck:`, fetchedDeck);
+        setDeck(fetchedDeck);
+
+        // Use the deck's row_id to fetch flashcards
+        const fetchedCards = await fetchCardsForDeck(fetchedDeck.row_id); 
+        console.log(`[DeckDetailsDataLoader] Fetched cards:`, fetchedCards);
+        setFlashcards(fetchedCards);
+
+      } catch (err: any) {
+        console.error("[DeckDetailsDataLoader] Error fetching deck data:", err);
+        setError(err.message || "Could not load deck details.");
+        setDeck(null);
+        setFlashcards([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDeckData();
+  }, [deckSlug]);
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center py-10"><Spinner /></div>;
+  }
+
+  if (error) {
+    return <div style={{ color: 'red' }}>Error: {error}</div>;
+  }
+
+  if (!deck) {
+    // This case might be redundant if error handles 'not found', but good for safety
+    return <div>Deck not found.</div>; 
+  }
+
+  // Render the actual page component with fetched data
+  return <DeckDetailPage deck={deck} flashcards={flashcards} />;
+};
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -18,8 +85,7 @@ function App() {
   const [deckError, setDeckError] = useState<string | null>(null);
 
   const [currentLocale, setCurrentLocale] = useState('en');
-  const [currentPage, setCurrentPage] = useState<string>('home');
-  
+
   useEffect(() => {
     console.log("[App] Initializing AuthService...");
     authService.initialize().then(() => {
@@ -91,66 +157,37 @@ function App() {
     setCurrentLocale(locale);
   };
 
-  const handleNavigate = (page: string) => {
-    setCurrentPage(page);
-  };
-
   if (isInitializing) {
-     return <div style={{ padding: '20px', textAlign: 'center' }}>Initializing Authentication...</div>;
+     return <div className="flex justify-center items-center min-h-screen"><Spinner /></div>;
   }
 
-  return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      {authError && (
-        <div style={{ backgroundColor: 'red', color: 'white', padding: '10px', textAlign: 'center' }}>
-          Auth Error: {authError}
-        </div>
-      )}
-      {isLoadingAuth && !isInitializing && (
-         <div style={{ backgroundColor: 'blue', color: 'white', padding: '5px', textAlign: 'center', fontSize: '0.8em' }}>
-           Connecting...
-         </div>
-      )}
-      <Header 
-        loggedIn={isAuthenticated}
-        address={address || ""}
-        onConnect={handleConnect}
-        onDisconnect={handleDisconnect}
-        currentLocale={currentLocale}
-        onLocaleChange={handleLocaleChange}
-        onNavigateHome={() => handleNavigate('home')}
-        onNavigateDecks={() => handleNavigate('decks')}
-        onNavigateAdd={() => handleNavigate('add')}
-      />
-      <div className="container mx-auto px-4 max-w-6xl">
-        <main className="flex-grow py-12">
-          {currentPage === 'home' && (
-            <>
-              <Hero />
-              <section className="text-center mb-12 md:mb-16">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Scarlett is your supercoach</h2>
-                <p className="text-xl md:text-xl text-muted-foreground max-w-3xl mx-auto">
-                  Spaced repetition, roleplaying, productivity, and more.
-                </p>
-              </section>
+  const HomePage = () => (
+    <>
+        <Hero />
+        <section className="text-center mb-12 md:mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Scarlett is your supercoach</h2>
+          <p className="text-xl md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            Spaced repetition, roleplaying, productivity, and more.
+          </p>
+        </section>
 
-              <section className="flex flex-col gap-12 md:gap-16 mb-12 md:mb-16">
-                <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
-                  <div className="flex-1 text-center md:text-left">
+        <section className="flex flex-col gap-12 md:gap-16 mb-12 md:mb-16">
+            <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                <div className="flex-1 text-center md:text-left">
                     <h3 className="text-2xl md:text-3xl font-semibold mb-3">Add flashcards to study</h3>
                     <p className="text-muted-foreground mb-4 text-xl">
-                      Add decks of flashcards from other users, or make your own.
+                        Add decks of flashcards from other users, or make your own.
                     </p>
-                    <Button variant="outline" onClick={() => handleNavigate('decks')}>View Decks</Button>
-                  </div>
-                  <div className="flex-1 w-full md:w-auto">
+                    <Button variant="outline">View Decks</Button>
+                </div>
+                <div className="flex-1 w-full md:w-auto">
                     <div className="bg-neutral-700 aspect-square rounded-lg w-full max-w-md mx-auto md:mx-0">
                     </div>
-                  </div>
                 </div>
+            </div>
 
-                <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
-                   <div className="flex-1 w-full md:w-auto md:order-first">
+            <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+               <div className="flex-1 w-full md:w-auto md:order-first">
                     <div className="bg-neutral-700 aspect-square rounded-lg w-full max-w-md mx-auto md:mx-0">
                     </div>
                   </div>
@@ -200,33 +237,69 @@ function App() {
                     </div>
                   </div>
                 </div>
-              </section>
+            </section>
 
-              <section className="text-center py-12">
+            <section className="text-center py-12">
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">Download for Free</h2>
                 <p className="text-xl text-muted-foreground mb-8">
-                  Install the Scarlett browser extension
+                    Install the Scarlett browser extension
                 </p>
                 <div className="flex justify-center gap-4">
-                  <Button size="lg" className="h-11 px-8 text-xl">Chrome</Button>
-                  <Button size="lg" className="h-11 px-8 text-xl">Firefox</Button>
+                    <Button size="lg" className="h-11 px-8 text-xl">Chrome</Button>
+                    <Button size="lg" className="h-11 px-8 text-xl">Firefox</Button>
                 </div>
-              </section>
-            </>
-          )}
+            </section>
+        </>
+  );
 
-          {currentPage === 'decks' && (
-            <div>
-              {deckError && (
-                <div style={{ color: 'orange', marginBottom: '10px' }}>Deck Error: {deckError}</div>
-              )}
-              {isLoadingDecks ? (
-                <div>Loading Decks...</div>
-              ) : (
-                <DecksPage decks={decks} />
-              )}
-            </div>
-          )}
+  return (
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      {authError && (
+        <div style={{ backgroundColor: 'red', color: 'white', padding: '10px', textAlign: 'center' }}>
+          Auth Error: {authError}
+        </div>
+      )}
+      {isLoadingAuth && !isInitializing && (
+         <div className="fixed top-4 right-4 bg-secondary text-secondary-foreground p-2 rounded shadow-lg z-50">
+           <Spinner /> 
+         </div>
+      )}
+      <Header 
+        loggedIn={isAuthenticated}
+        address={address || ""}
+        onConnect={handleConnect}
+        onDisconnect={handleDisconnect}
+        currentLocale={currentLocale}
+        onLocaleChange={handleLocaleChange}
+      />
+      <div className="container mx-auto px-4 max-w-6xl">
+        <main className="flex-grow py-12">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            
+            <Route 
+              path="/decks"
+              element={
+                <div>
+                    {deckError && (
+                        <div style={{ color: 'orange', marginBottom: '10px' }}>Deck Error: {deckError}</div>
+                    )}
+                    {isLoadingDecks ? (
+                        <div className="flex justify-center items-center py-10"><Spinner /></div>
+                    ) : (
+                        <DecksPage decks={decks} /> 
+                    )}
+                </div>
+              }
+            />
+
+            <Route 
+                path="/decks/:deckSlug"
+                element={<DeckDetailsDataLoader />}
+            />
+
+            <Route path="/add" element={<AddDeckPage />} />
+          </Routes>
         </main>
       </div>
     </div>

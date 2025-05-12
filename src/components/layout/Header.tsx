@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Plus, Cards } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
@@ -20,10 +21,7 @@ export interface HeaderProps {
   locales?: { value: string; label: string }[]
   currentLocale?: string
   onLocaleChange?: (locale: string) => void
-  // Add navigation handlers
-  onNavigateHome?: () => void;
-  onNavigateDecks?: () => void;
-  onNavigateAdd?: () => void;
+  // Removed navigation handlers
 }
 
 function truncateAddress(address?: string) {
@@ -39,10 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
   locales = [{value: 'en', label: 'EN'}, {value: 'es', label: 'ES'}, {value: 'fr', label: 'FR'}], 
   currentLocale = 'en',
   onLocaleChange,
-  // Destructure new props
-  onNavigateHome,
-  onNavigateDecks,
-  onNavigateAdd
+  // Removed destructuring of old props
 }) => {
   return (
     <header
@@ -52,22 +47,27 @@ export const Header: React.FC<HeaderProps> = ({
     >
       <div className="container mx-auto px-4 max-w-6xl h-full flex items-center justify-between">
         <div className="flex items-center gap-6 min-w-0">
-          <img 
-            src={reactLogo} 
-            alt="Logo" 
-            className="h-8 w-8 cursor-pointer" 
-            onClick={onNavigateHome} 
-          />
+          <Link to="/">
+            <img 
+              src={reactLogo} 
+              alt="Logo" 
+              className="h-8 w-8 cursor-pointer" 
+            />
+          </Link>
           {loggedIn && (
             <nav className="flex items-center gap-2 md:gap-4">
-              <Button variant="ghost" size="sm" className="font-medium" onClick={onNavigateDecks}>
-                <Cards size={18} className="mr-1" />
-                Decks
-              </Button>
-              <Button variant="ghost" size="sm" className="font-medium" onClick={onNavigateAdd}>
-                <Plus size={18} className="mr-1" />
-                Add
-              </Button>
+              <Link to="/decks">
+                <Button variant="ghost" size="sm" className="font-medium">
+                  <Cards size={18} className="mr-1" />
+                  Decks
+                </Button>
+              </Link>
+              <Link to="/add">
+                <Button variant="ghost" size="sm" className="font-medium">
+                  <Plus size={18} className="mr-1" />
+                  Add
+                </Button>
+              </Link>
             </nav>
           )}
         </div>

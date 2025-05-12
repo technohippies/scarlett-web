@@ -2,6 +2,10 @@ import * as React from 'react';
 // Update import path for Deck type
 import { Deck } from './DecksPage'; 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+// Import hooks and service functions
+// import { useParams } from 'react-router-dom';
+// import { useState, useEffect } from 'react';
+// import { fetchDeckBySlug, fetchCardsForDeck } from '@/services/TablelandService'; 
 
 // Define the structure for a single flashcard based on the provided schema
 export interface Flashcard {
@@ -21,12 +25,28 @@ export interface Flashcard {
   updated_at: string;
 }
 
-export interface DeckDetailPageProps {
+// Restore props interface
+export interface DeckDetailPageProps { 
   deck: Deck;
   flashcards: Flashcard[];
 }
 
+// Restore component signature to accept props
 export const DeckDetailPage: React.FC<DeckDetailPageProps> = ({ deck, flashcards }) => {
+  // Remove state and effects
+  // const { deckSlug } = useParams<{ deckSlug: string }>();
+  // const [deck, setDeck] = useState<Deck | null>(null);
+  // const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  // const [isLoading, setIsLoading] = useState<boolean>(true);
+  // const [error, setError] = useState<string | null>(null);
+  // useEffect(() => { ... }, [deckSlug]);
+
+  // Remove loading/error checks, assume data is passed in ready
+  // if (isLoading) { ... }
+  // if (error) { ... }
+  // if (!deck) { ... }
+
+  // Original render logic using props
   return (
     <div className="space-y-8">
       <div>
