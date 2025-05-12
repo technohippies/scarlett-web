@@ -20,6 +20,10 @@ export interface HeaderProps {
   locales?: { value: string; label: string }[]
   currentLocale?: string
   onLocaleChange?: (locale: string) => void
+  // Add navigation handlers
+  onNavigateHome?: () => void;
+  onNavigateDecks?: () => void;
+  onNavigateAdd?: () => void;
 }
 
 function truncateAddress(address?: string) {
@@ -34,7 +38,11 @@ export const Header: React.FC<HeaderProps> = ({
   onDisconnect,
   locales = [{value: 'en', label: 'EN'}, {value: 'es', label: 'ES'}, {value: 'fr', label: 'FR'}], 
   currentLocale = 'en',
-  onLocaleChange
+  onLocaleChange,
+  // Destructure new props
+  onNavigateHome,
+  onNavigateDecks,
+  onNavigateAdd
 }) => {
   return (
     <header
@@ -44,20 +52,21 @@ export const Header: React.FC<HeaderProps> = ({
     >
       <div className="container mx-auto px-4 max-w-6xl h-full flex items-center justify-between">
         <div className="flex items-center gap-6 min-w-0">
-          <img src={reactLogo} alt="Logo" className="h-8 w-8" />
+          <img 
+            src={reactLogo} 
+            alt="Logo" 
+            className="h-8 w-8 cursor-pointer" 
+            onClick={onNavigateHome} 
+          />
           {loggedIn && (
             <nav className="flex items-center gap-2 md:gap-4">
-              <Button variant="ghost" size="sm" className="font-medium">
+              <Button variant="ghost" size="sm" className="font-medium" onClick={onNavigateDecks}>
                 <Cards size={18} className="mr-1" />
                 Decks
               </Button>
-              <Button variant="ghost" size="sm" className="font-medium">
+              <Button variant="ghost" size="sm" className="font-medium" onClick={onNavigateAdd}>
                 <Plus size={18} className="mr-1" />
                 Add
-              </Button>
-              <Button variant="ghost" size="sm" className="font-medium">
-                <MagnifyingGlass size={18} className="mr-1" />
-                Search
               </Button>
             </nav>
           )}
