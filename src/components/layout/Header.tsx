@@ -15,6 +15,7 @@ export interface HeaderProps {
   loggedIn?: boolean
   address?: string
   onConnect?: () => void
+  onDisconnect?: () => void
   // Localization props
   locales?: { value: string; label: string }[]
   currentLocale?: string
@@ -30,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
   loggedIn = false,
   address = "",
   onConnect,
+  onDisconnect,
   locales = [{value: 'en', label: 'EN'}, {value: 'es', label: 'ES'}, {value: 'fr', label: 'FR'}], 
   currentLocale = 'en',
   onLocaleChange
@@ -76,9 +78,14 @@ export const Header: React.FC<HeaderProps> = ({
             </Select>
           </div>
           {loggedIn ? (
-            <Button variant="outline" size="sm" className="font-mono cursor-default" disabled>
-              Connected: {truncateAddress(address)}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="font-mono text-xs px-2 py-1 h-auto" disabled>
+                {truncateAddress(address)}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={onDisconnect} className="text-xs px-2 py-1 h-auto">
+                Disconnect
+              </Button>
+            </div>
           ) : (
             <Button variant="default" size="sm" onClick={onConnect}>
               Connect
