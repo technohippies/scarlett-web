@@ -4,20 +4,25 @@ import { DeckDetailPage, Flashcard } from "@/components/pages/DeckDetailsPage";
 // Update Deck import path
 import { Deck } from "@/components/pages/DecksPage"; 
 
-const meta = {
+const meta: Meta<typeof DeckDetailPage> = {
   // Update title
   title: "Pages/DeckDetailPage", 
   component: DeckDetailPage,
   parameters: {
-    layout: "padded",
-    backgrounds: {
-      default: "dark",
-      values: [
-        { name: "light", value: "#ffffff" },
-        { name: "dark", value: "#171717" },
-      ],
+    layout: "fullscreen",
+    docs: {
+      description: {
+        component: 'Displays detailed view of a flashcard deck with all its cards in a table format.',
+      },
     },
   },
+  decorators: [
+    (Story) => (
+      <div className="min-h-screen bg-background p-8">
+        <Story />
+      </div>
+    ),
+  ],
   tags: ["autodocs"],
   argTypes: {
     deck: { control: "object" },
@@ -29,122 +34,120 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-// Sample Deck data (can be one from DecksPanel.stories or a new one)
-const sampleDeck: Deck = {
-  id: 2,
-  owner_address: "0xB0dD2a6FAB0180C8b2fc4f144273Cc693d7896Ed",
-  deck_slug: "hsk-vocabulary-en-zh-1",
-  name: "HSK Vocabulary (Level 1-6)",
-  description: "Comprehensive HSK 1-6 vocabulary from the standardized Chinese Proficiency Test. Ideal for learners aiming for fluency.",
-  front_content_type: "text",
-  back_content_type: "text",
-  front_language: "en",
-  back_language: "zh",
+// Mock deck data
+const mockDeck: Deck = {
+  id: 1,
+  row_id: 1,
+  deck_slug: 'spanish-basics',
+  name: 'Spanish Basics',
+  description: 'Essential Spanish vocabulary for beginners',
+  front_language: 'en',
+  back_language: 'es',
+  owner_address: '0x123...abc',
+  created_at: '2024-01-15T10:00:00Z',
+  updated_at: '2024-01-15T10:00:00Z',
+  front_content_type: 'text',
+  back_content_type: 'text',
   image_cid: null,
-  attributes: { level: "1-6", source: "official" },
-  created_at: "2025-05-09T10:19:03.991Z",
-  updated_at: "2025-05-09T10:19:03.991Z",
+  attributes: { level: 'beginner' },
 };
 
-// Sample Flashcard data based on your provided schema and linked to sampleDeck (id: 2)
-const sampleFlashcards: Flashcard[] = [
+// Mock flashcard data
+const mockFlashcards: Flashcard[] = [
   {
-    id: 340,
-    deck_row_id: 2,
-    front_text: "to love",
-    front_image_cid: null,
-    front_audio_cid: null,
-    front_phonetic_guide: null,
-    back_text: "爱",
-    back_image_cid: null,
-    back_audio_cid: null,
-    back_phonetic_guide: "ài",
-    notes: "Commonly used verb.",
-    attributes: { part_of_speech: "verb" },
-    created_at: "2025-05-09T13:41:39.082Z",
-    updated_at: "2025-05-09T13:41:39.082Z",
+    id: 1,
+    deck_row_id: 1,
+    front_text: 'Hello',
+    front_phonetic_guide: '/həˈloʊ/',
+    back_text: 'Hola',
+    back_phonetic_guide: '/ˈo.la/',
+    notes: 'Common greeting',
+    attributes: { difficulty: 'easy' },
+    created_at: '2024-01-15T10:00:00Z',
+    updated_at: '2024-01-15T10:00:00Z',
   },
   {
-    id: 341,
-    deck_row_id: 2,
-    front_text: "eight",
-    front_image_cid: null,
-    front_audio_cid: null,
-    front_phonetic_guide: null,
-    back_text: "八",
-    back_image_cid: null,
-    back_audio_cid: null,
-    back_phonetic_guide: "bā",
-    notes: null,
-    attributes: { category: "number" },
-    created_at: "2025-05-09T13:41:39.082Z",
-    updated_at: "2025-05-09T13:41:39.082Z",
+    id: 2,
+    deck_row_id: 1,
+    front_text: 'Goodbye',
+    front_phonetic_guide: '/ɡʊdˈbaɪ/',
+    back_text: 'Adiós',
+    back_phonetic_guide: '/aˈð̞jos/',
+    notes: 'Formal farewell',
+    attributes: { difficulty: 'easy' },
+    created_at: '2024-01-15T10:00:00Z',
+    updated_at: '2024-01-15T10:00:00Z',
   },
   {
-    id: 342,
-    deck_row_id: 2,
-    front_text: "(informal) father",
-    front_image_cid: null,
-    front_audio_cid: null,
-    front_phonetic_guide: null,
-    back_text: "爸爸",
-    back_image_cid: null,
-    back_audio_cid: null,
-    back_phonetic_guide: "bà ba",
-    notes: "Casual term for father.",
-    attributes: { formality: "informal" },
-    created_at: "2025-05-09T13:41:39.082Z",
-    updated_at: "2025-05-09T13:41:39.082Z",
+    id: 3,
+    deck_row_id: 1,
+    front_text: 'Thank you',
+    front_phonetic_guide: '/θæŋk juː/',
+    back_text: 'Gracias',
+    back_phonetic_guide: '/ˈɡɾa.θjas/',
+    notes: 'Expression of gratitude',
+    attributes: { difficulty: 'easy' },
+    created_at: '2024-01-15T10:00:00Z',
+    updated_at: '2024-01-15T10:00:00Z',
   },
   {
-    id: 343,
-    deck_row_id: 2,
-    front_text: "cup",
-    front_image_cid: null,
-    front_audio_cid: null,
-    front_phonetic_guide: null,
-    back_text: "杯子",
-    back_image_cid: null,
-    back_audio_cid: null,
-    back_phonetic_guide: "bēi zi",
-    notes: null,
-    attributes: { measure_word: "个" },
-    created_at: "2025-05-09T13:41:39.082Z",
-    updated_at: "2025-05-09T13:41:39.082Z",
+    id: 4,
+    deck_row_id: 1,
+    front_text: 'Please',
+    front_phonetic_guide: '/pliːz/',
+    back_text: 'Por favor',
+    back_phonetic_guide: '/poɾ faˈβ̞oɾ/',
+    notes: 'Polite request',
+    attributes: { difficulty: 'easy' },
+    created_at: '2024-01-15T10:00:00Z',
+    updated_at: '2024-01-15T10:00:00Z',
   },
   {
-    id: 344,
-    deck_row_id: 2,
-    front_text: "Beijing",
-    front_image_cid: null,
-    front_audio_cid: null,
-    front_phonetic_guide: null,
-    back_text: "北京",
-    back_image_cid: null,
-    back_audio_cid: null,
-    back_phonetic_guide: "Běi jīng",
-    notes: "Capital of China.",
-    attributes: { type: "location", country: "China" },
-    created_at: "2025-05-09T13:41:39.082Z",
-    updated_at: "2025-05-09T13:41:39.082Z",
+    id: 5,
+    deck_row_id: 1,
+    front_text: 'Excuse me',
+    front_phonetic_guide: '/ɪkˈskjuːz miː/',
+    back_text: 'Disculpe',
+    back_phonetic_guide: '/d̪isˈkul.pe/',
+    notes: 'Getting attention politely',
+    attributes: { difficulty: 'medium' },
+    created_at: '2024-01-15T10:00:00Z',
+    updated_at: '2024-01-15T10:00:00Z',
   },
 ];
 
-export const Default: Story = {
+export const WithCards: Story = {
   args: {
-    deck: sampleDeck,
-    flashcards: sampleFlashcards,
+    deck: mockDeck,
+    flashcards: mockFlashcards,
   },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Deck detail page showing a deck with multiple flashcards.',
+      },
+    },
+  },
+};
+
+// Empty deck story
+const emptyDeck: Deck = {
+  ...mockDeck,
+  name: 'Empty Deck',
+  description: 'A deck with no flashcards yet',
 };
 
 export const EmptyDeck: Story = {
   args: {
-    deck: {
-      ...sampleDeck,
-      name: "Empty Deck Example",
-      description: "This deck has no flashcards to display."
-    },
+    deck: emptyDeck,
     flashcards: [],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Deck detail page showing an empty deck with no flashcards.',
+      },
+    },
   },
 };
 
@@ -152,6 +155,7 @@ export const MinimalDeckInfo: Story = {
     args: {
         deck: {
             id: 3,
+            row_id: 3,
             owner_address: "0x1234567890abcdef1234567890abcdef12345678",
             deck_slug: "minimal-deck",
             name: "Minimal Info Deck",
@@ -170,12 +174,8 @@ export const MinimalDeckInfo: Story = {
                 id: 1,
                 deck_row_id: 3,
                 front_text: "Hello",
-                front_image_cid: null,
-                front_audio_cid: null,
                 front_phonetic_guide: null,
                 back_text: "Hola",
-                back_image_cid: null,
-                back_audio_cid: null,
                 back_phonetic_guide: null,
                 notes: null,
                 attributes: null,

@@ -364,28 +364,7 @@ class AuthService {
     }
   }
 
-  // Set up Silk-specific event listeners
-  private setupSilkEventListeners(): void {
-    if (window.silk) {
-      window.silk.on('accountsChanged', (accounts: string[]) => {
-        console.log('[AuthService] Silk accounts changed:', accounts);
-        if (accounts.length === 0) {
-          this.resetAuthState();
-        } else {
-          this.userAddress = accounts[0] || null;
-        }
-      });
 
-      window.silk.on('chainChanged', (chainId: string) => {
-        console.log('[AuthService] Silk chain changed:', chainId);
-      });
-
-      window.silk.on('disconnect', () => {
-        console.log('[AuthService] Silk disconnected');
-        this.resetAuthState();
-      });
-    }
-  }
 
   // Direct wallet connection (fallback)
   async connectDirectly(): Promise<AuthResult> {

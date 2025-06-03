@@ -14,20 +14,11 @@ import {
 export interface Flashcard {
   id: string;
   front_text: string;
-  front_image_cid?: string;
-  front_audio_cid?: string;
   front_phonetic_guide?: string;
   back_text: string;
-  back_image_cid?: string;
-  back_audio_cid?: string;
   back_phonetic_guide?: string;
   notes?: string;
   attributes?: any;
-  // Local form state (not sent to TL)
-  frontImageFile?: File;
-  frontAudioFile?: File;
-  backImageFile?: File;
-  backAudioFile?: File;
 }
 
 export interface SubmitDeckFormData {
@@ -45,29 +36,22 @@ export interface SubmitDeckPageProps {
   isSubmitting?: boolean;
 }
 
-const LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "zh", label: "Chinese" },
-  { value: "ja", label: "Japanese" },
-  { value: "vi", label: "Vietnamese" },
-  { value: "es", label: "Spanish" },
-  { value: "fr", label: "French" },
-  { value: "de", label: "German" },
-];
-
 const createEmptyCard = (): Flashcard => ({
   id: Math.random().toString(36).substr(2, 9),
   front_text: "",
+  front_phonetic_guide: "",
   back_text: "",
+  back_phonetic_guide: "",
+  notes: "",
 });
 
 const createEmptyFormData = (): SubmitDeckFormData => ({
   name: "",
   description: "",
   frontLanguage: "en",
-  backLanguage: "zh",
-  inputMode: "manual",
-  flashcards: Array(5).fill(null).map(() => createEmptyCard()),
+  backLanguage: "es",
+  inputMode: 'manual',
+  flashcards: Array.from({ length: 5 }, createEmptyCard),
 });
 
 export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
@@ -93,15 +77,6 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
       ...prev,
       flashcards: prev.flashcards.map(card =>
         card.id === cardId ? { ...card, [field]: value } : card
-      )
-    }));
-  };
-
-  const handleFileChange = (cardId: string, field: 'frontImageFile' | 'frontAudioFile' | 'backImageFile' | 'backAudioFile', file: File | null) => {
-    setFormData(prev => ({
-      ...prev,
-      flashcards: prev.flashcards.map(card =>
-        card.id === cardId ? { ...card, [field]: file || undefined } : card
       )
     }));
   };
@@ -153,93 +128,6 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
     }
   };
 
-  const FileDropZone = ({ onFileChange, accept, label, currentFile }: {
-    onFileChange: (file: File | null) => void;
-    accept: string;
-    label: string;
-    currentFile?: File;
-  }) => {
-    const fileId = `file-${Math.random().toString(36).substr(2, 9)}`;
-    const [isDragOver, setIsDragOver] = useState(false);
-    
-    const handleDragOver = (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragOver(true);
-    };
-    
-    const handleDragLeave = (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragOver(false);
-    };
-    
-    const handleDrop = (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragOver(false);
-      
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        const file = files[0];
-        // Check if file type matches accept
-        if (accept === 'image/*' && file.type.startsWith('image/')) {
-          onFileChange(file);
-        } else if (accept === 'audio/*' && file.type.startsWith('audio/')) {
-          onFileChange(file);
-        } else if (accept === '.csv' && file.name.endsWith('.csv')) {
-          onFileChange(file);
-        }
-      }
-    };
-    
-    return (
-      <div 
-        className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer ${
-          isDragOver 
-            ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' 
-            : currentFile 
-              ? 'border-green-500 bg-green-50 dark:bg-green-950' 
-              : 'border-muted-foreground/25 hover:border-muted-foreground/50'
-        }`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <input
-          type="file"
-          accept={accept}
-          onChange={(e) => onFileChange(e.target.files?.[0] || null)}
-          className="hidden"
-          id={fileId}
-        />
-        <label htmlFor={fileId} className="cursor-pointer text-sm block">
-          <div className={
-            isDragOver 
-              ? 'text-blue-700 dark:text-blue-300'
-              : currentFile 
-                ? 'text-green-700 dark:text-green-300' 
-                : 'text-muted-foreground'
-          }>
-            {isDragOver 
-              ? '📎 Drop file here' 
-              : currentFile 
-                ? `✓ ${currentFile.name}` 
-                : label
-            }
-          </div>
-          {currentFile && !isDragOver && (
-            <div className="text-xs text-green-600 dark:text-green-400 mt-1">
-              Click to change or drag new file
-            </div>
-          )}
-          {!currentFile && !isDragOver && (
-            <div className="text-xs text-muted-foreground mt-1">
-              Click or drag to upload
-            </div>
-          )}
-        </label>
-      </div>
-    );
-  };
-
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
@@ -275,21 +163,26 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
             {errors.description && <p className="text-sm text-destructive mt-1">{errors.description}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
               value={formData.frontLanguage}
               onValueChange={(value) => handleInputChange("frontLanguage", value)}
               disabled={isSubmitting}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Front language" />
+                <SelectValue placeholder="Front Language" />
               </SelectTrigger>
               <SelectContent>
-                {LANGUAGES.map((language) => (
-                  <SelectItem key={language.value} value={language.value}>
-                    {language.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="es">Spanish</SelectItem>
+                <SelectItem value="fr">French</SelectItem>
+                <SelectItem value="de">German</SelectItem>
+                <SelectItem value="it">Italian</SelectItem>
+                <SelectItem value="pt">Portuguese</SelectItem>
+                <SelectItem value="ru">Russian</SelectItem>
+                <SelectItem value="ja">Japanese</SelectItem>
+                <SelectItem value="ko">Korean</SelectItem>
+                <SelectItem value="zh">Chinese</SelectItem>
               </SelectContent>
             </Select>
 
@@ -299,43 +192,48 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
               disabled={isSubmitting}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Back language" />
+                <SelectValue placeholder="Back Language" />
               </SelectTrigger>
               <SelectContent>
-                {LANGUAGES.map((language) => (
-                  <SelectItem key={language.value} value={language.value}>
-                    {language.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="es">Spanish</SelectItem>
+                <SelectItem value="fr">French</SelectItem>
+                <SelectItem value="de">German</SelectItem>
+                <SelectItem value="it">Italian</SelectItem>
+                <SelectItem value="pt">Portuguese</SelectItem>
+                <SelectItem value="ru">Russian</SelectItem>
+                <SelectItem value="ja">Japanese</SelectItem>
+                <SelectItem value="ko">Korean</SelectItem>
+                <SelectItem value="zh">Chinese</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        {/* Input Mode Toggle */}
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant={formData.inputMode === 'manual' ? 'default' : 'outline'}
-            onClick={() => handleInputChange('inputMode', 'manual')}
-            disabled={isSubmitting}
-          >
-            Manual Entry
-          </Button>
-          <Button
-            type="button"
-            variant={formData.inputMode === 'csv' ? 'default' : 'outline'}
-            onClick={() => handleInputChange('inputMode', 'csv')}
-            disabled={isSubmitting}
-          >
-            CSV Import
-          </Button>
+        {/* Input Mode */}
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Input Method</label>
+            <Select
+              value={formData.inputMode}
+              onValueChange={(value: 'manual' | 'csv') => handleInputChange("inputMode", value)}
+              disabled={isSubmitting}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="manual">✍️ Manual Entry</SelectItem>
+                <SelectItem value="csv">📄 CSV Upload</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Content Area */}
+        {/* Content Input */}
         {formData.inputMode === 'csv' ? (
           <div className="space-y-4">
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors">
+            <div className="border-2 border-dashed border-border/30 rounded-lg p-8 text-center hover:border-border/60 transition-colors bg-card/10 hover:bg-card/20">
               <input
                 type="file"
                 accept=".csv"
@@ -344,10 +242,10 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
                 id="csv-upload"
                 disabled={isSubmitting}
               />
-                             <label htmlFor="csv-upload" className="cursor-pointer">
-                 <div className="text-lg mb-2">📄 Drop CSV or click to upload</div>
-                 <div className="text-sm text-muted-foreground">Format: front_text,back_text,front_phonetic_guide,back_phonetic_guide,notes</div>
-               </label>
+              <label htmlFor="csv-upload" className="cursor-pointer">
+                <div className="text-lg mb-2">📄 Drop CSV or click to upload</div>
+                <div className="text-sm text-muted-foreground">Format: front_text,back_text,front_phonetic_guide,back_phonetic_guide,notes</div>
+              </label>
             </div>
             {formData.csvFile && (
               <p className="text-sm text-muted-foreground">File: {formData.csvFile.name}</p>
@@ -355,18 +253,23 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
             {errors.csv && <p className="text-sm text-destructive">{errors.csv}</p>}
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">Flashcards</h3>
-              <Button type="button" onClick={addCard} disabled={isSubmitting} size="sm">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Flashcards</h2>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addCard}
+                disabled={isSubmitting}
+              >
                 + Add Card
               </Button>
             </div>
-            
+
             {formData.flashcards.map((card, index) => (
-              <div key={card.id} className="border rounded-lg p-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Card {index + 1}</span>
+              <div key={card.id} className="border border-border/50 rounded-lg p-6 space-y-4 relative bg-card/20 hover:bg-card/30 transition-colors">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium text-muted-foreground">Card {index + 1}</h3>
                   {formData.flashcards.length > 5 && (
                     <Button
                       type="button"
@@ -380,75 +283,47 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
                   )}
                 </div>
                 
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <div className="space-y-2">
-                     <Input
-                       value={card.front_text}
-                       onChange={(e) => handleCardChange(card.id, 'front_text', e.target.value)}
-                       placeholder="Front text"
-                       disabled={isSubmitting}
-                     />
-                     <Input
-                       value={card.front_phonetic_guide || ''}
-                       onChange={(e) => handleCardChange(card.id, 'front_phonetic_guide', e.target.value)}
-                       placeholder="Phonetic guide (optional)"
-                       disabled={isSubmitting}
-                     />
-                     <div className="grid grid-cols-2 gap-2">
-                       <FileDropZone
-                         onFileChange={(file) => handleFileChange(card.id, 'frontImageFile', file)}
-                         accept="image/*"
-                         label="📸 Image"
-                         currentFile={card.frontImageFile}
-                       />
-                       <FileDropZone
-                         onFileChange={(file) => handleFileChange(card.id, 'frontAudioFile', file)}
-                         accept="audio/*"
-                         label="🎵 Audio"
-                         currentFile={card.frontAudioFile}
-                       />
-                     </div>
-                   </div>
-                   
-                   <div className="space-y-2">
-                     <Input
-                       value={card.back_text}
-                       onChange={(e) => handleCardChange(card.id, 'back_text', e.target.value)}
-                       placeholder="Back text"
-                       disabled={isSubmitting}
-                     />
-                     <Input
-                       value={card.back_phonetic_guide || ''}
-                       onChange={(e) => handleCardChange(card.id, 'back_phonetic_guide', e.target.value)}
-                       placeholder="Phonetic guide (optional)"
-                       disabled={isSubmitting}
-                     />
-                     <div className="grid grid-cols-2 gap-2">
-                       <FileDropZone
-                         onFileChange={(file) => handleFileChange(card.id, 'backImageFile', file)}
-                         accept="image/*"
-                         label="📸 Image"
-                         currentFile={card.backImageFile}
-                       />
-                       <FileDropZone
-                         onFileChange={(file) => handleFileChange(card.id, 'backAudioFile', file)}
-                         accept="audio/*"
-                         label="🎵 Audio"
-                         currentFile={card.backAudioFile}
-                       />
-                     </div>
-                   </div>
-                 </div>
-                 
-                 <div>
-                   <Textarea
-                     value={card.notes || ''}
-                     onChange={(e) => handleCardChange(card.id, 'notes', e.target.value)}
-                     placeholder="Notes (optional)"
-                     disabled={isSubmitting}
-                     rows={2}
-                   />
-                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Input
+                      value={card.front_text}
+                      onChange={(e) => handleCardChange(card.id, 'front_text', e.target.value)}
+                      placeholder="Front text"
+                      disabled={isSubmitting}
+                    />
+                    <Input
+                      value={card.front_phonetic_guide || ''}
+                      onChange={(e) => handleCardChange(card.id, 'front_phonetic_guide', e.target.value)}
+                      placeholder="Phonetic guide (optional)"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Input
+                      value={card.back_text}
+                      onChange={(e) => handleCardChange(card.id, 'back_text', e.target.value)}
+                      placeholder="Back text"
+                      disabled={isSubmitting}
+                    />
+                    <Input
+                      value={card.back_phonetic_guide || ''}
+                      onChange={(e) => handleCardChange(card.id, 'back_phonetic_guide', e.target.value)}
+                      placeholder="Phonetic guide (optional)"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Textarea
+                    value={card.notes || ''}
+                    onChange={(e) => handleCardChange(card.id, 'notes', e.target.value)}
+                    placeholder="Notes (optional)"
+                    disabled={isSubmitting}
+                    rows={2}
+                  />
+                </div>
               </div>
             ))}
             
@@ -457,33 +332,16 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
         )}
 
         {/* Submit */}
-        <div className="flex gap-4 pt-4">
-          <Button
-            type="submit"
+        <div className="border-t border-border/50 pt-6">
+          <Button 
+            type="submit" 
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" 
             disabled={isSubmitting}
-            className="flex-1"
           >
-            {isSubmitting ? "Uploading..." : "Submit to Testnet"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isSubmitting}
-            onClick={() => {
-              setFormData(createEmptyFormData());
-              setErrors({});
-            }}
-          >
-            Reset
+            {isSubmitting ? "Submitting..." : "Submit Deck"}
           </Button>
         </div>
       </form>
-
-      <div className="mt-6 p-4 bg-muted rounded-lg">
-        <p className="text-sm text-muted-foreground">
-          Free testnet submission • Media files uploaded to Tableland (Irys integration coming soon) • Quality decks promoted to mainnet
-        </p>
-      </div>
     </div>
   );
 };

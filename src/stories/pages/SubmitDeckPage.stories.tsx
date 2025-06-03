@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { SubmitDeckPage, SubmitDeckFormData } from '@/components/pages/SubmitDeckPage';
+import { SubmitDeckPage } from '@/components/pages/SubmitDeckPage';
 import { action } from '@storybook/addon-actions';
 
 const meta: Meta<typeof SubmitDeckPage> = {
@@ -9,7 +9,7 @@ const meta: Meta<typeof SubmitDeckPage> = {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: 'Flashcard deck submission with CSV import or manual entry. Supports media files via Irys.',
+        component: 'Flashcard deck submission with CSV import or manual entry.',
       },
     },
   },
@@ -17,7 +17,7 @@ const meta: Meta<typeof SubmitDeckPage> = {
     onSubmit: { action: 'submitted' },
     isSubmitting: {
       control: 'boolean',
-      description: 'Shows uploading state during Irys + Tableland submission',
+      description: 'Shows uploading state during Tableland submission',
     },
   },
   decorators: [
@@ -32,52 +32,22 @@ const meta: Meta<typeof SubmitDeckPage> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const handleSubmit = (data: SubmitDeckFormData) => {
-  action('onSubmit')(data);
-  console.log('Deck submitted:', {
-    deck: {
-      name: data.name,
-      description: data.description,
-      languages: `${data.frontLanguage} → ${data.backLanguage}`,
-    },
-    mode: data.inputMode,
-    cards: data.inputMode === 'manual' ? data.flashcards.length : 'CSV',
-    mediaFiles: data.inputMode === 'manual' ? 
-      data.flashcards.filter(c => c.frontFile || c.backFile).length : 
-      'Unknown'
-  });
-};
-
-export const ManualEntry: Story = {
+export const Default: Story = {
   args: {
-    onSubmit: handleSubmit,
+    onSubmit: action('deck-submitted'),
     isSubmitting: false,
   },
 };
 
-export const CsvImport: Story = {
+export const Submitting: Story = {
   args: {
-    onSubmit: handleSubmit,
-    isSubmitting: false,
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: 'Toggle to CSV mode to test file upload interface.',
-      },
-    },
-  },
-};
-
-export const Uploading: Story = {
-  args: {
-    onSubmit: handleSubmit,
+    onSubmit: action('deck-submitted'),
     isSubmitting: true,
   },
   parameters: {
     docs: {
       description: {
-        story: 'Loading state during Irys media upload and Tableland submission.',
+        story: 'Showing the uploading state during submission.',
       },
     },
   },

@@ -12,12 +12,8 @@ export interface Flashcard {
   id: number;
   deck_row_id: number;
   front_text: string | null;
-  front_image_cid: string | null;
-  front_audio_cid: string | null;
   front_phonetic_guide: string | null;
   back_text: string | null;
-  back_image_cid: string | null;
-  back_audio_cid: string | null;
   back_phonetic_guide: string | null;
   notes: string | null;
   attributes: Record<string, any> | null; // JSON or similar structure

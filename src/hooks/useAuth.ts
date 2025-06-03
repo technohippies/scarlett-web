@@ -19,14 +19,14 @@ export interface UseAuthReturn {
   error: string | null;
   connect: () => Promise<void>;
   disconnect: () => void;
-  provider: ethers.providers.Web3Provider | null;
-  signer: ethers.Signer | null;
+  provider: ethers.BrowserProvider | null;
+  signer: ethers.JsonRpcSigner | null;
 }
 
 export const useAuth = (): UseAuthReturn => {
   const [silkInstance, setSilkInstance] = useState<SilkProvider | null>(null);
-  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
-  const [signer, setSigner] = useState<ethers.Signer | null>(null);
+  const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
+  const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Start true until initialized
@@ -36,7 +36,7 @@ export const useAuth = (): UseAuthReturn => {
     console.log('[useAuth] Minimal Initializing Silk...');
     setIsLoading(true);
     try {
-      const silk = initSilk() as SilkProvider;
+      const silk = initSilk() as any; // Use any to avoid type conflicts with Silk SDK
       setSilkInstance(silk);
       console.log('[useAuth] Minimal Silk provider instance created.');
       // ALL OTHER LOGIC TEMPORARILY COMMENTED OUT
@@ -93,8 +93,8 @@ export const useAuth = (): UseAuthReturn => {
         throw new Error(`Unsupported login selection: ${selectionResult}`);
       }
 
-      console.log(`[useAuth] Creating ethers Web3Provider from ${providerSource} source.`);
-      const web3Provider = new ethers.providers.Web3Provider(activeProvider);
+      console.log(`[useAuth] Creating ethers BrowserProvider from ${providerSource} source.`);
+      const web3Provider = new ethers.BrowserProvider(activeProvider);
       setProvider(web3Provider);
 
       console.log('[useAuth] Requesting accounts via eth_requestAccounts...');
@@ -110,7 +110,7 @@ export const useAuth = (): UseAuthReturn => {
       console.log(`[useAuth] Account address obtained: ${currentAddress}`);
 
       console.log('[useAuth] Getting signer...');
-      const currentSigner = web3Provider.getSigner();
+      const currentSigner = await web3Provider.getSigner();
       setSigner(currentSigner);
       console.log('[useAuth] Signer obtained.');
 

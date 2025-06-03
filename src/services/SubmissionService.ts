@@ -1,27 +1,11 @@
 import { Database, helpers } from "@tableland/sdk";
-import { WebUploader } from "@irys/web-upload";
-import { WebEthereum } from "@irys/web-upload-ethereum";
-import { EthersV6Adapter } from "@irys/web-upload-ethereum-ethers-v6";
-import { ethers } from "ethers";
 import { authService } from "./AuthService";
 import { SubmitDeckFormData, Flashcard } from "@/components/pages/SubmitDeckPage";
 
 const STAGING_DECK_TABLE = "staging_deck_1_84532_112";
 const STAGING_FLASHCARD_TABLE = "staging_spaced_repetition_2_84532_114";
 
-interface IrysUploadResult {
-  id: string;
-  timestamp: number;
-}
-
 export class SubmissionService {
-    private async getIrysUploader() {
-    // REAL Irys implementation following their React + Vite docs EXACTLY
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const irysUploader = await WebUploader(WebEthereum).withAdapter(EthersV6Adapter(provider));
-    return irysUploader;
-  }
-
   private async switchToBaseSepolia() {
     const signer = await authService.getSigner();
     if (!signer || !signer.provider) {
@@ -100,60 +84,7 @@ export class SubmissionService {
     });
   }
 
-  async uploadFileToIrys(file: File): Promise<string> {
-    const irysUploader = await this.getIrysUploader();
-    
-    try {
-      // Convert File to Buffer for REAL Irys upload
-      const arrayBuffer = await file.arrayBuffer();
-      const fileBuffer = Buffer.from(arrayBuffer);
-      
-      // Create tags for the file
-      const tags = [
-        { name: "Content-Type", value: file.type },
-        { name: "Application", value: "Scarlett-Flashcards" },
-        { name: "File-Name", value: file.name }
-      ];
-      
-      const result = await irysUploader.upload(fileBuffer, { tags });
-      
-      console.log(`📁 File "${file.name}" uploaded to Irys: ${result.id}`);
-      return result.id;
-    } catch (error) {
-      console.error("Error uploading to Irys:", error);
-      throw new Error(`Failed to upload ${file.name} to Irys`);
-    }
-  }
-
-  async uploadMediaFiles(flashcards: Flashcard[]): Promise<Flashcard[]> {
-    const updatedCards: Flashcard[] = [];
-    
-    for (const card of flashcards) {
-      const updatedCard = { ...card };
-      
-      // Upload front media files
-      if (card.frontImageFile) {
-        updatedCard.front_image_cid = await this.uploadFileToIrys(card.frontImageFile);
-      }
-      if (card.frontAudioFile) {
-        updatedCard.front_audio_cid = await this.uploadFileToIrys(card.frontAudioFile);
-      }
-      
-      // Upload back media files
-      if (card.backImageFile) {
-        updatedCard.back_image_cid = await this.uploadFileToIrys(card.backImageFile);
-      }
-      if (card.backAudioFile) {
-        updatedCard.back_audio_cid = await this.uploadFileToIrys(card.backAudioFile);
-      }
-      
-      updatedCards.push(updatedCard);
-    }
-    
-    return updatedCards;
-  }
-
-  async submitDeckToTableland(formData: SubmitDeckFormData, flashcardsWithCids: Flashcard[]): Promise<void> {
+  async submitDeckToTableland(formData: SubmitDeckFormData, flashcards: Flashcard[]): Promise<void> {
     const db = await this.getTablelandDatabase();
     const userAddress = authService.getUserAddress();
     
@@ -187,14 +118,14 @@ export class SubmissionService {
         'text', // Default content type
         formData.frontLanguage,
         formData.backLanguage,
-        null, // No deck-level image for now
+        null, // No deck-level image
         JSON.stringify({ inputMode: formData.inputMode }), // Store metadata
         timestamp,
         timestamp
       ];
 
       console.log("Inserting deck...");
-      const deckResult = await db.prepare(deckInsertSql).bind(...deckValues).run();
+      await db.prepare(deckInsertSql).bind(...deckValues).run();
       console.log("✅ Deck insertion submitted to Tableland")
       
       // For now, use a placeholder deck ID since getting the actual ID is complex
@@ -202,7 +133,7 @@ export class SubmissionService {
       const deckRowId = Date.now(); // Temporary solution
 
       // Prepare all flashcard insertions for batching
-      console.log(`Preparing batch insertion of ${flashcardsWithCids.length} flashcards...`);
+      console.log(`Preparing batch insertion of ${flashcards.length} flashcards...`);
       const flashcardStatements = [];
       
       const flashcardInsertSql = `
@@ -211,7 +142,7 @@ export class SubmissionService {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
-      for (const card of flashcardsWithCids) {
+      for (const card of flashcards) {
         if (!card.front_text.trim() || !card.back_text.trim()) {
           continue; // Skip empty cards
         }
@@ -219,12 +150,12 @@ export class SubmissionService {
         const flashcardValues = [
           deckRowId,
           card.front_text,
-          card.front_image_cid || null,
-          card.front_audio_cid || null,
+          null, // front_image_cid - no file uploads
+          null, // front_audio_cid - no file uploads
           card.front_phonetic_guide || null,
           card.back_text,
-          card.back_image_cid || null,
-          card.back_audio_cid || null,
+          null, // back_image_cid - no file uploads
+          null, // back_audio_cid - no file uploads
           card.back_phonetic_guide || null,
           card.notes || null,
           JSON.stringify({ originalId: card.id }),
@@ -255,9 +186,6 @@ export class SubmissionService {
   async submitDeck(formData: SubmitDeckFormData): Promise<void> {
     console.log("🚀 Starting deck submission...");
     
-    // Note: You may see a "payment policy violation" warning in the console.
-    // This is harmless and relates to browser security policies for payment features.
-    
     // Validate wallet connection
     if (!authService.isConnected()) {
       throw new Error("Please connect your wallet first");
@@ -279,13 +207,9 @@ export class SubmissionService {
       throw new Error("Minimum 5 complete flashcards required");
     }
 
-    // Step 1: Upload media files to Irys
-    console.log("📤 Uploading media files to Irys...");
-    const flashcardsWithCids = await this.uploadMediaFiles(flashcardsToSubmit);
-
-    // Step 2: Submit to Tableland
+    // Submit to Tableland (no file uploads)
     console.log("💾 Submitting deck to Tableland...");
-    await this.submitDeckToTableland(formData, flashcardsWithCids);
+    await this.submitDeckToTableland(formData, flashcardsToSubmit);
 
     console.log("✅ Submission complete!");
   }
