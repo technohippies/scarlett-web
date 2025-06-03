@@ -144,25 +144,46 @@ function App() {
   }, []);
 
   const handleConnect = useCallback(async () => {
+    // Double-check initialization status
     if (!authService.isInitialized()) {
         console.warn("[App] Connect called before AuthService initialized.");
         setAuthError("Auth service not ready, please wait.");
-        return;
+        
+        // Wait for initialization to complete, then retry
+        try {
+          console.log("[App] Waiting for AuthService to initialize...");
+          await authService.initialize();
+          console.log("[App] AuthService now ready, retrying connection...");
+        } catch (initError) {
+          console.error("[App] Failed to initialize AuthService:", initError);
+          setAuthError("Failed to initialize authentication service.");
+          return;
+        }
     }
+    
     setIsLoadingAuth(true);
     setAuthError(null);
     console.log("[App] Calling authService.connectWithSelector...");
-    const result: AuthResult = await authService.connectWithSelector();
-    console.log(`[App] connectWithSelector result:`, result);
-    if (result.success) {
-        setIsAuthenticated(true);
-        setAddress(result.address || null);
-    } else {
-        setIsAuthenticated(false);
-        setAddress(null);
-        setAuthError(result.error || "Connection failed.");
+    
+    try {
+      const result: AuthResult = await authService.connectWithSelector();
+      console.log(`[App] connectWithSelector result:`, result);
+      
+      if (result.success) {
+          setIsAuthenticated(true);
+          setAddress(result.address || null);
+          setAuthError(null);
+      } else {
+          setIsAuthenticated(false);
+          setAddress(null);
+          setAuthError(result.error || "Connection failed.");
+      }
+    } catch (error) {
+      console.error("[App] Unexpected error during connection:", error);
+      setAuthError(error instanceof Error ? error.message : "Unexpected connection error");
+    } finally {
+      setIsLoadingAuth(false);
     }
-    setIsLoadingAuth(false);
   }, []);
 
   const handleDisconnect = useCallback(() => {
@@ -341,7 +362,7 @@ function App() {
       <Header 
         loggedIn={isAuthenticated}
         address={address || ""}
-        onConnect={handleConnect}
+        onConnect={isInitializing ? undefined : handleConnect}
         onDisconnect={handleDisconnect}
         currentLocale={currentLocale}
         onLocaleChange={handleLocaleChange}

@@ -96,8 +96,13 @@ export const Header: React.FC<HeaderProps> = ({
               </Button>
             </div>
           ) : (
-            <Button variant="default" size="sm" onClick={onConnect}>
-              Connect
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={onConnect}
+              disabled={!onConnect}
+            >
+              {onConnect ? "Connect" : "Loading..."}
             </Button>
           )}
         </div>

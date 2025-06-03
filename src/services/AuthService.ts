@@ -1,13 +1,14 @@
-import { ethers } from "ethers";
+import { ethers, BrowserProvider, Signer, JsonRpcSigner } from "ethers";
 import { initSilk } from "@silk-wallet/silk-wallet-sdk";
 
-// Define the expected structure of the Silk provider instance more accurately
+// Simple interface that works with both old and new SDK versions
 interface SilkProvider {
   login: () => Promise<void>;
-  loginSelector: (ethereum?: any) => Promise<string | null>; 
+  loginSelector?: (ethereum?: any) => Promise<string | null>; 
   request: (args: { method: string; params?: any[] }) => Promise<any>;
-  // Add other EIP-1193 methods if needed
-  isSilk?: boolean; // Silk providers might have this flag
+  isSilk?: boolean;
+  on?: (event: string, listener: (...args: any[]) => void) => void;
+  removeListener?: (event: string, listener: (...args: any[]) => void) => void;
 }
 
 // Result type for connect operations
@@ -20,14 +21,14 @@ export interface AuthResult {
 // Extend Window interface to recognize ethereum
 declare global {
   interface Window {
-    ethereum?: ethers.providers.ExternalProvider & SilkProvider; // Allow ethereum to potentially be Silk or MetaMask etc.
+    ethereum?: any; // EIP-1193 provider interface
     silk?: SilkProvider; // Explicitly allow window.silk
   }
 }
 
 class AuthService {
-  private provider: ethers.providers.Web3Provider | null = null;
-  private signer: ethers.Signer | null = null;
+  private provider: BrowserProvider | null = null;
+  private signer: JsonRpcSigner | null = null;
   private userAddress: string | null = null;
   private isAuthenticated: boolean = false;
   private silkProvider: SilkProvider | null = null;
@@ -56,11 +57,30 @@ class AuthService {
     }
     try {
       console.log("[AuthService] Initializing Silk SDK...");
-      // Initialize without config to bypass TS error for now
-      this.silkProvider = initSilk() as SilkProvider;
-      console.log("[AuthService] Silk provider instance created.");
+      
+      // Configuration with WalletConnect support for wallet authentication
+      const initOptions: any = {
+        // REQUIRED for wallet authentication to work
+        walletConnectProjectId: 'c4f79dac6f0987896655b97725bb8c16', // Demo project ID
+        
+        config: {
+          authenticationMethods: ['wallet', 'email', 'social'] as any,
+          allowedSocials: ['google'] as any,
+          styles: {
+            darkMode: true
+          }
+        },
+        project: {
+          name: 'Scarlett'
+        }
+      };
 
-      // Make it globally available if needed (optional)
+      console.log("[AuthService] Silk init options:", JSON.stringify(initOptions, null, 2));
+      
+      this.silkProvider = initSilk(initOptions) as SilkProvider;
+      console.log("[AuthService] Silk provider created");
+
+      // Make it globally available
       if (typeof window !== 'undefined') {
         window.silk = this.silkProvider;
         console.log("[AuthService] Silk provider assigned to window.silk");
@@ -71,7 +91,6 @@ class AuthService {
       
     } catch (err) {
       console.error("[AuthService] Error initializing Silk SDK:", err);
-      // Decide if initialization failure is critical
     } finally {
       this._isInitialized = true;
       console.log(`[AuthService] Initialization complete. Initial state: isAuthenticated=${this.isAuthenticated}, address=${this.userAddress}`);
@@ -88,12 +107,12 @@ class AuthService {
     // Prefer checking injected provider first
     if (typeof window !== 'undefined' && window.ethereum && !window.ethereum.isSilk) { // Check if it's NOT the silk provider itself
       try {
-        const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
-        const accounts = await web3Provider.send('eth_accounts', []); // Non-intrusive check
+        const browserProvider = new BrowserProvider(window.ethereum);
+        const accounts = await browserProvider.send('eth_accounts', []); // Non-intrusive check
         if (accounts && accounts.length > 0) {
           console.log(`[AuthService] Found existing INJECTED account: ${accounts[0]}`);
-          this.provider = web3Provider;
-          this.signer = this.provider.getSigner();
+          this.provider = browserProvider;
+          this.signer = await this.provider.getSigner();
           this.userAddress = await this.signer.getAddress();
           this.isAuthenticated = true;
           this.externalProviderUsed = 'injected';
@@ -123,11 +142,11 @@ class AuthService {
     return `${this.userAddress.substring(0, 6)}...${this.userAddress.substring(this.userAddress.length - 4)}`;
   }
 
-  getSigner(): ethers.Signer | null {
+  getSigner(): JsonRpcSigner | null {
     return this.signer;
   }
 
-  // Connect using the Silk login selector UI
+  // Connect using Silk - back to the approach that was working
   async connectWithSelector(): Promise<AuthResult> {
     console.log('[AuthService] Attempting connection via connectWithSelector...');
     if (!this._isInitialized || !this.silkProvider) {
@@ -136,47 +155,96 @@ class AuthService {
     }
 
     try {
-      console.log('[AuthService] Calling silkProvider.loginSelector...');
-      const selectionResult = await this.silkProvider.loginSelector(window.ethereum);
-      console.log(`[AuthService] loginSelector result: '${selectionResult}'`);
+      // First try using window.silk if available
+      if (window.silk && window.silk.loginSelector) {
+        console.log('[AuthService] Calling window.silk.loginSelector...');
+        const selectionResult = await window.silk.loginSelector(window.ethereum);
+        console.log(`[AuthService] loginSelector result: '${selectionResult}'`);
 
-      let activeProvider: any;
-      let providerSource: 'silk' | 'injected';
+        let activeProvider: any;
+        let providerSource: 'silk' | 'injected';
 
-      if (selectionResult === 'silk') {
-        activeProvider = this.silkProvider;
-        providerSource = 'silk';
-        console.log('[AuthService] User selected Silk. Using Silk provider.');
-      } else if (selectionResult === 'injected' && window.ethereum) {
-        activeProvider = window.ethereum;
-        providerSource = 'injected';
-        console.log('[AuthService] User selected injected wallet. Using window.ethereum.');
+        if (selectionResult === 'silk') {
+          activeProvider = window.silk;
+          providerSource = 'silk';
+          console.log('[AuthService] User selected Silk. Using Silk provider.');
+        } else if (selectionResult === 'injected' && window.ethereum) {
+          activeProvider = window.ethereum;
+          providerSource = 'injected';
+          console.log('[AuthService] User selected injected wallet. Using window.ethereum.');
+        } else {
+          console.log('[AuthService] No selection made or modal closed.');
+          return { success: false, error: "Connection cancelled or no wallet selected." };
+        }
+        
+        console.log(`[AuthService] Creating ethers BrowserProvider from ${providerSource} source.`);
+        this.provider = new BrowserProvider(activeProvider);
+
+        console.log('[AuthService] Requesting accounts via eth_requestAccounts...');
+        const accounts = await this.provider.send('eth_requestAccounts', []);
+        console.log(`[AuthService] eth_requestAccounts response: ${JSON.stringify(accounts)}`);
+
+        if (!accounts || accounts.length === 0) {
+          throw new Error('No accounts returned from provider.');
+        }
+
+        this.signer = await this.provider.getSigner();
+        this.userAddress = await this.signer.getAddress();
+        this.isAuthenticated = true;
+        this.externalProviderUsed = providerSource;
+        console.log(`[AuthService] Connection successful (${providerSource}). Address: ${this.userAddress}`);
+        return { success: true, address: this.userAddress };
+        
       } else {
-        // Handle cases like modal closed, null/undefined result, etc.
-        console.log('[AuthService] No selection made or modal closed.');
-        return { success: false, error: "Connection cancelled or no wallet selected." };
+        // Fallback to direct wallet connection
+        console.log('[AuthService] window.silk.loginSelector not available, trying direct connection...');
+        return await this.connectDirectly();
       }
-      
-      console.log(`[AuthService] Creating ethers Web3Provider from ${providerSource} source.`);
-      this.provider = new ethers.providers.Web3Provider(activeProvider);
 
+    } catch (error: any) {
+      console.error('[AuthService] Error during connectWithSelector:', error);
+      let errorMessage = "Failed to connect wallet";
+      if (error.message) {
+        if (error.message.includes('User rejected') || error.code === 4001) {
+          errorMessage = "Connection request rejected by user.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      this.resetAuthState();
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  // Alternative connection method if users want to connect directly with MetaMask
+  async connectDirectly(): Promise<AuthResult> {
+    console.log('[AuthService] Attempting direct connection to injected wallet...');
+    
+    if (!window.ethereum) {
+      return { success: false, error: "No wallet detected. Please install MetaMask or another Ethereum wallet." };
+    }
+
+    try {
+      this.provider = new BrowserProvider(window.ethereum);
+      
       console.log('[AuthService] Requesting accounts via eth_requestAccounts...');
       const accounts = await this.provider.send('eth_requestAccounts', []);
       console.log(`[AuthService] eth_requestAccounts response: ${JSON.stringify(accounts)}`);
 
       if (!accounts || accounts.length === 0) {
-        throw new Error('No accounts returned from provider.');
+        throw new Error('No accounts returned from wallet.');
       }
 
-      this.signer = this.provider.getSigner();
+      this.signer = await this.provider.getSigner();
       this.userAddress = await this.signer.getAddress();
       this.isAuthenticated = true;
-      this.externalProviderUsed = providerSource;
-      console.log(`[AuthService] Connection successful (${providerSource}). Address: ${this.userAddress}`);
+      this.externalProviderUsed = 'injected';
+      
+      console.log(`[AuthService] Direct connection successful. Address: ${this.userAddress}`);
       return { success: true, address: this.userAddress };
 
     } catch (error: any) {
-      console.error('[AuthService] Error during connectWithSelector:', error);
+      console.error('[AuthService] Error during direct connection:', error);
       let errorMessage = "Failed to connect wallet";
       if (error.message) {
         if (error.message.includes('User rejected') || error.code === 4001) {
