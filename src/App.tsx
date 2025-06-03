@@ -166,8 +166,7 @@ function App() {
     console.log("[App] Calling authService.connectWithSelector...");
     
     try {
-      // Try the simple test connection first to debug
-      const result: AuthResult = await authService.testSilkConnection();
+      const result: AuthResult = await authService.connectWithSelector();
       console.log(`[App] connectWithSelector result:`, result);
       
       if (result.success) {
