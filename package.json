@@ -13,6 +13,8 @@
     "chromatic": "npx chromatic --project-token=chpt_f25fb14b55f226d"
   },
   "dependencies": {
+    "@irys/upload": "^0.0.15",
+    "@irys/upload-ethereum": "^0.0.16",
     "@phosphor-icons/react": "^2.1.7",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-select": "^2.2.4",

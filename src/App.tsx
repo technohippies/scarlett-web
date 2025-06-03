@@ -2,6 +2,7 @@ import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Hero } from "@/components/layout/Hero";
 import { DecksPage, Deck } from "@/components/pages/DecksPage";
+import { SubmitDeckPage, SubmitDeckFormData } from "@/components/pages/SubmitDeckPage";
 import { useState, useEffect, useCallback } from "react";
 import { authService, AuthResult } from "@/services/AuthService";
 import { fetchAllDecks, fetchDeckBySlug, fetchCardsForDeck } from "@/services/TablelandService";
@@ -9,7 +10,36 @@ import { DeckDetailPage, Flashcard } from "@/components/pages/DeckDetailsPage";
 import { Routes, Route, useParams } from 'react-router-dom';
 import { Spinner } from '@/components/ui/Spinner';
 
-const AddDeckPage = () => <div><h2>Add New Deck (Placeholder)</h2></div>;
+// Component to handle deck submission
+const AddDeckPageWrapper = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (data: SubmitDeckFormData) => {
+    setIsSubmitting(true);
+    try {
+      console.log('Step 1: Uploading media files to Irys...');
+      // TODO: Upload media files to Irys and get URLs
+      
+      console.log('Step 2: Submitting deck to Tableland:', {
+        deck: { name: data.name, description: data.description, languages: `${data.frontLanguage}→${data.backLanguage}` },
+        mode: data.inputMode,
+        cardCount: data.inputMode === 'manual' ? data.flashcards.length : 'CSV',
+        mediaFiles: data.inputMode === 'manual' ? data.flashcards.filter(c => c.frontFile || c.backFile).length : 'Unknown'
+      });
+      
+      // Simulate upload process
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      alert(`✅ Deck "${data.name}" submitted to testnet for review!`);
+    } catch (error) {
+      console.error('Error submitting deck:', error);
+      alert('❌ Upload failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return <SubmitDeckPage onSubmit={handleSubmit} isSubmitting={isSubmitting} />;
+};
 
 const DeckDetailsDataLoader = () => {
   const { deckSlug } = useParams<{ deckSlug: string }>();
@@ -176,7 +206,7 @@ function App() {
                 <div className="flex-1 text-center md:text-left">
                     <h3 className="text-2xl md:text-3xl font-semibold mb-3">Add flashcards to study</h3>
                     <p className="text-muted-foreground mb-4 text-xl">
-                        Add decks of flashcards from other users, or make your own.
+                        Add decks of flashcards from other users, or make your own. 
                     </p>
                     <Button variant="outline">View Decks</Button>
                 </div>
@@ -201,7 +231,7 @@ function App() {
 
                 <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
                   <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Translate with ease, locally</h3>
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Translate faster, locally</h3>
                     <p className="text-muted-foreground text-xl">
                       Right click to translate any text, which then adds it to your flashcard deck automatically.
                     </p>
@@ -220,7 +250,60 @@ function App() {
                   <div className="flex-1 text-center md:text-left">
                     <h3 className="text-2xl md:text-3xl font-semibold mb-3">Quiz yourself daily</h3>
                     <p className="text-muted-foreground text-xl">
-                      To study your flashcards, Scarlett generates quiz questions like multiple choice to test your knowledge.
+                      Scarlett generates quiz questions like multiple choice to test your knowledge.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                  <div className="flex-1 text-center md:text-left">
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Translate faster, locally</h3>
+                    <p className="text-muted-foreground text-xl">
+                      Right click to translate any text, which then adds it to your flashcard deck automatically.
+                    </p>
+                  </div>
+                  <div className="flex-1 w-full md:w-auto">
+                    <div className="bg-neutral-700 aspect-square rounded-lg w-full max-w-md mx-auto md:mx-0">
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                   <div className="flex-1 w-full md:w-auto md:order-first">
+                    <div className="bg-neutral-700 aspect-square rounded-lg w-full max-w-md mx-auto md:mx-0">
+                    </div>
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Embed every webpage you visit</h3>
+                    <p className="text-muted-foreground text-xl">
+                      Scarlett queues, summarizes, and embeds every page you visit. She knows you better than you know yourself.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                  <div className="flex-1 text-center md:text-left">
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Block sites during "Focus Mode"</h3>
+                    <p className="text-muted-foreground text-xl">
+                      Find yourself visiting porn sites or social media habitually? Enable focus mode to redirect to your flashcards instead.
+                    </p>
+                  </div>
+                  <div className="flex-1 w-full md:w-auto">
+                    <div className="bg-neutral-700 aspect-square rounded-lg w-full max-w-md mx-auto md:mx-0">
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                   <div className="flex-1 w-full md:w-auto md:order-first">
+                    <div className="bg-neutral-700 aspect-square rounded-lg w-full max-w-md mx-auto md:mx-0">
+                    </div>
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Get voice audio with timestamps</h3>
+                    <p className="text-muted-foreground text-xl">
+                      Setup text-to-speech with ElevenLabs to generate realistic TTS with word-level timestamps, which are ideal for learning.</p>
+                      <p className="text-muted-foreground text-xl mt-5"> Support for Orpheus, Dia, and Kokoro soon.
                     </p>
                   </div>
                 </div>
@@ -298,7 +381,7 @@ function App() {
                 element={<DeckDetailsDataLoader />}
             />
 
-            <Route path="/add" element={<AddDeckPage />} />
+            <Route path="/add" element={<AddDeckPageWrapper />} />
           </Routes>
         </main>
       </div>
