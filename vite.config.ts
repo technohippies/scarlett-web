@@ -10,4 +10,14 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    // Add headers to allow iframe embedding and relax CSP for development
+    headers: {
+      'Content-Security-Policy': "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https: wss: ws:; frame-src 'self' https:; connect-src 'self' https: wss: ws:",
+    }
+  },
+  // Define global variables that might be needed
+  define: {
+    global: 'globalThis',
+  },
 })

@@ -1,28 +1,17 @@
-import { ethers, BrowserProvider, Signer, JsonRpcSigner } from "ethers";
+import { ethers, BrowserProvider, JsonRpcSigner } from "ethers";
 import { initSilk } from "@silk-wallet/silk-wallet-sdk";
 
-// Simple interface that works with both old and new SDK versions
-interface SilkProvider {
-  login: () => Promise<void>;
-  loginSelector?: (ethereum?: any) => Promise<string | null>; 
-  request: (args: { method: string; params?: any[] }) => Promise<any>;
-  isSilk?: boolean;
-  on?: (event: string, listener: (...args: any[]) => void) => void;
-  removeListener?: (event: string, listener: (...args: any[]) => void) => void;
-}
-
-// Result type for connect operations
 export interface AuthResult {
   success: boolean;
   address?: string;
   error?: string;
 }
 
-// Extend Window interface to recognize ethereum
+// Extend Window interface to recognize ethereum and silk
 declare global {
   interface Window {
     ethereum?: any; // EIP-1193 provider interface
-    silk?: SilkProvider; // Explicitly allow window.silk
+    silk?: any; // Silk provider
   }
 }
 
@@ -31,69 +20,104 @@ class AuthService {
   private signer: JsonRpcSigner | null = null;
   private userAddress: string | null = null;
   private isAuthenticated: boolean = false;
-  private silkProvider: SilkProvider | null = null;
-  private initializationPromise: Promise<void> | null = null;
+  private silkProvider: any = null;
   private _isInitialized: boolean = false;
-  private externalProviderUsed: 'silk' | 'injected' | null = null;
 
   constructor() {
     console.log("[AuthService] Constructor called");
-    // Avoid async operations in constructor, use an explicit init method pattern
   }
 
   // Initialize the service - call this early in your app
-  initialize(): Promise<void> {
-    if (!this.initializationPromise) {
-      console.log("[AuthService] Initializing...");
-      this.initializationPromise = this._initialize();
-    }
-    return this.initializationPromise;
-  }
-
-  private async _initialize(): Promise<void> {
+  async initialize(): Promise<void> {
     if (this._isInitialized) {
-        console.log("[AuthService] Already initialized.");
-        return;
+      console.log("[AuthService] Already initialized.");
+      return;
     }
+
     try {
       console.log("[AuthService] Initializing Silk SDK...");
       
-      // Configuration with WalletConnect support for wallet authentication
-      const initOptions: any = {
-        // REQUIRED for wallet authentication to work
-        walletConnectProjectId: 'c4f79dac6f0987896655b97725bb8c16', // Demo project ID
-        
+      // Clear any existing Silk-related storage first
+      if (typeof window !== 'undefined') {
+        try {
+          // Clear localStorage
+          const keysToRemove = [];
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const key = window.localStorage.key(i);
+            if (key && (key.includes('silk') || key.includes('human') || key.includes('wallet') || key.includes('auth'))) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach(key => {
+            console.log(`[AuthService] Clearing localStorage key: ${key}`);
+            window.localStorage.removeItem(key);
+          });
+
+          // Clear sessionStorage
+          const sessionKeysToRemove = [];
+          for (let i = 0; i < window.sessionStorage.length; i++) {
+            const key = window.sessionStorage.key(i);
+            if (key && (key.includes('silk') || key.includes('human') || key.includes('wallet') || key.includes('auth'))) {
+              sessionKeysToRemove.push(key);
+            }
+          }
+          sessionKeysToRemove.forEach(key => {
+            console.log(`[AuthService] Clearing sessionStorage key: ${key}`);
+            window.sessionStorage.removeItem(key);
+          });
+        } catch (error) {
+          console.warn('[AuthService] Could not clear storage:', error);
+        }
+      }
+
+      // Configuration that enables all social logins and external wallets
+      // Based on Silk documentation, ensure the config is properly structured
+      const initOptions = {
+        walletConnectProjectId: '24700ee5f2334eb685af8af1a9842fed',
+        // Use staging environment for development to avoid CSP and production restrictions
+        useStaging: true, // Set to true for development environment
+        // Add development mode configurations
+        development: true,
         config: {
-          authenticationMethods: ['wallet', 'email', 'social'] as any,
-          allowedSocials: ['google'] as any,
-          styles: {
-            darkMode: true
+          allowedSocials: ['google', 'twitter', 'discord', 'linkedin', 'apple', 'github'],
+          authenticationMethods: ['email', 'phone', 'social'],  // Remove 'wallet' temporarily to avoid conflicts
+          styles: { 
+            darkMode: true 
           }
         },
         project: {
+          entryTitle: 'Learn with Scarlett 斯嘉丽 🎶',
           name: 'Scarlett'
         }
       };
 
-      console.log("[AuthService] Silk init options:", JSON.stringify(initOptions, null, 2));
+      console.log("[AuthService] Initializing with config:", JSON.stringify(initOptions, null, 2));
       
-      this.silkProvider = initSilk(initOptions) as SilkProvider;
-      console.log("[AuthService] Silk provider created");
+      // Initialize Silk SDK - this sets up window.silk
+      this.silkProvider = initSilk(initOptions as any);
+      console.log("[AuthService] Silk provider created:", this.silkProvider);
 
-      // Make it globally available
+      // Make it globally available (though initSilk should do this automatically)
       if (typeof window !== 'undefined') {
         window.silk = this.silkProvider;
         console.log("[AuthService] Silk provider assigned to window.silk");
+        
+        // Log config after initialization
+        setTimeout(() => {
+          if (window.silk?.config) {
+            console.log("[AuthService] 🔍 Final Silk config:", JSON.stringify(window.silk.config, null, 2));
+          }
+        }, 1000);
       }
 
-      // Check if already connected (non-intrusively)
+      // Check if already connected (for auto-reconnect)
       await this.checkForExistingConnection();
       
     } catch (err) {
       console.error("[AuthService] Error initializing Silk SDK:", err);
     } finally {
       this._isInitialized = true;
-      console.log(`[AuthService] Initialization complete. Initial state: isAuthenticated=${this.isAuthenticated}, address=${this.userAddress}`);
+      console.log(`[AuthService] Initialization complete. Connected: ${this.isAuthenticated}, Address: ${this.userAddress}`);
     }
   }
   
@@ -101,32 +125,75 @@ class AuthService {
     return this._isInitialized;
   }
 
-  // Non-intrusively check for existing connections (MetaMask, or maybe Silk remembers)
+  // Check for existing wallet connections (for auto-reconnect)
   private async checkForExistingConnection(): Promise<void> {
     console.log('[AuthService] Checking for existing wallet connection...');
-    // Prefer checking injected provider first
-    if (typeof window !== 'undefined' && window.ethereum && !window.ethereum.isSilk) { // Check if it's NOT the silk provider itself
+    
+    // First check if Silk has an existing session
+    if (window.silk) {
+      try {
+        // Try to get accounts without triggering login modal
+        const accounts = await window.silk.request({ method: 'eth_accounts' });
+        if (accounts && accounts.length > 0) {
+          console.log(`[AuthService] Found existing Silk connection: ${accounts[0]}`);
+          this.provider = new BrowserProvider(window.silk);
+          this.signer = await this.provider.getSigner();
+          this.userAddress = await this.signer.getAddress();
+          this.isAuthenticated = true;
+          return;
+        }
+      } catch (error) {
+        console.log('[AuthService] No existing Silk connection');
+      }
+    }
+    
+    // Check injected wallet (MetaMask, etc) as fallback
+    if (typeof window !== 'undefined' && window.ethereum && !window.ethereum.isSilk) {
       try {
         const browserProvider = new BrowserProvider(window.ethereum);
-        const accounts = await browserProvider.send('eth_accounts', []); // Non-intrusive check
+        const accounts = await browserProvider.send('eth_accounts', []);
+        
         if (accounts && accounts.length > 0) {
-          console.log(`[AuthService] Found existing INJECTED account: ${accounts[0]}`);
+          console.log(`[AuthService] Found existing injected wallet: ${accounts[0]}`);
           this.provider = browserProvider;
           this.signer = await this.provider.getSigner();
           this.userAddress = await this.signer.getAddress();
           this.isAuthenticated = true;
-          this.externalProviderUsed = 'injected';
-          console.log(`[AuthService] Restored INJECTED session: ${this.userAddress}`);
-          return; // Found connection, no need to check further initially
+          
+          this.setupEventListeners();
+          return;
         } else {
-          console.log('[AuthService] Injected provider found, but no accounts authorized.');
+          console.log('[AuthService] Injected wallet found but no accounts authorized.');
         }
       } catch (error) {
-        console.error('[AuthService] Error checking injected provider connection:', error);
+        console.error('[AuthService] Error checking injected wallet:', error);
       }
     }
-    // Add check for Silk persistence if needed/supported
-    console.log('[AuthService] No active injected session found.');
+    
+    console.log('[AuthService] No existing connection found.');
+  }
+
+  // Set up event listeners for wallet changes
+  private setupEventListeners(): void {
+    if (window.ethereum && !window.ethereum.isSilk) {
+      window.ethereum.on('accountsChanged', (accounts: string[]) => {
+        console.log('[AuthService] Accounts changed:', accounts);
+        if (accounts.length === 0) {
+          this.resetAuthState();
+        } else {
+          this.userAddress = accounts[0];
+        }
+      });
+
+      window.ethereum.on('chainChanged', (chainId: string) => {
+        console.log('[AuthService] Chain changed:', chainId);
+      });
+
+      window.ethereum.on('disconnect', () => {
+        console.log('[AuthService] Wallet disconnected');
+        this.resetAuthState();
+      });
+    }
   }
 
   isConnected(): boolean {
@@ -142,94 +209,194 @@ class AuthService {
     return `${this.userAddress.substring(0, 6)}...${this.userAddress.substring(this.userAddress.length - 4)}`;
   }
 
-  getSigner(): JsonRpcSigner | null {
+  async getSigner(): Promise<JsonRpcSigner | null> {
+    if (!this.provider) return null;
+    
+    if (!this.signer) {
+      try {
+        this.signer = await this.provider.getSigner();
+      } catch (error) {
+        console.error('[AuthService] Error getting signer:', error);
+        return null;
+      }
+    }
+    
     return this.signer;
   }
 
-  // Connect using Silk - back to the approach that was working
+  // Debug method to inspect current state
+  private debugCurrentState(): void {
+    console.log('[AuthService] === DEBUG STATE ===');
+    console.log('[AuthService] window.silk exists:', !!window.silk);
+    console.log('[AuthService] window.silk.connected:', window.silk?.connected);
+    console.log('[AuthService] this.isAuthenticated:', this.isAuthenticated);
+    console.log('[AuthService] this.userAddress:', this.userAddress);
+    
+    // Check what's in storage
+    if (typeof window !== 'undefined') {
+      const storageKeys = [];
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const key = window.localStorage.key(i);
+        if (key && (key.includes('silk') || key.includes('human') || key.includes('wallet') || key.includes('auth'))) {
+          storageKeys.push(key);
+        }
+      }
+      console.log('[AuthService] Relevant localStorage keys:', storageKeys);
+    }
+    console.log('[AuthService] === END DEBUG ===');
+  }
+
+  // Simple test connection method
+  async testSilkConnection(): Promise<AuthResult> {
+    console.log('[AuthService] Testing simple Silk connection...');
+    
+    if (!window.silk) {
+      return { success: false, error: "Silk not available" };
+    }
+
+    try {
+      console.log('[AuthService] Available Silk methods:', Object.getOwnPropertyNames(window.silk));
+      console.log('[AuthService] Silk provider type:', typeof window.silk);
+      
+      // Just try the most basic connection
+      const accounts = await window.silk.request({ method: 'eth_requestAccounts' });
+      console.log('[AuthService] Simple connection accounts:', accounts);
+      
+      if (accounts && accounts.length > 0) {
+        this.userAddress = accounts[0] || null;
+        this.isAuthenticated = true;
+        return { success: true, address: this.userAddress || undefined };
+      } else {
+        return { success: false, error: "No accounts returned" };
+      }
+    } catch (error: any) {
+      console.error('[AuthService] Simple connection failed:', error);
+      return { success: false, error: error.message || "Connection failed" };
+    }
+  }
+
+  // Main connection method using Silk
   async connectWithSelector(): Promise<AuthResult> {
-    console.log('[AuthService] Attempting connection via connectWithSelector...');
-    if (!this._isInitialized || !this.silkProvider) {
-      console.error('[AuthService] AuthService or SilkProvider not initialized.');
+    console.log('[AuthService] Attempting connection via Silk...');
+    
+    // Debug current state
+    this.debugCurrentState();
+    
+    if (!this._isInitialized || !this.silkProvider || !window.silk) {
+      console.error('[AuthService] Service not initialized or Silk not available.');
       return { success: false, error: "Authentication service not ready." };
     }
 
     try {
-      // First try using window.silk if available
-      if (window.silk && window.silk.loginSelector) {
-        console.log('[AuthService] Calling window.silk.loginSelector...');
-        const selectionResult = await window.silk.loginSelector(window.ethereum);
-        console.log(`[AuthService] loginSelector result: '${selectionResult}'`);
+      console.log('[AuthService] Starting fresh connection attempt...');
+      
+      // Force complete reset first
+      await this.forceResetSilk();
+      
+      // Wait a moment for everything to clear
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log('[AuthService] Triggering authentication modal...');
+      
+      // Try using the login method first, then request accounts
+      if (window.silk.login && typeof window.silk.login === 'function') {
+        console.log('[AuthService] Using silk.login() method...');
+        const loginResult = await window.silk.login();
+        console.log('[AuthService] Login result:', loginResult);
+      }
+      
+      // Now request accounts - this should show the full modal with all options
+      const accounts = await window.silk.request({ method: 'eth_requestAccounts' });
+      console.log(`[AuthService] Received accounts after authentication:`, accounts);
 
-        let activeProvider: any;
-        let providerSource: 'silk' | 'injected';
-
-        if (selectionResult === 'silk') {
-          activeProvider = window.silk;
-          providerSource = 'silk';
-          console.log('[AuthService] User selected Silk. Using Silk provider.');
-        } else if (selectionResult === 'injected' && window.ethereum) {
-          activeProvider = window.ethereum;
-          providerSource = 'injected';
-          console.log('[AuthService] User selected injected wallet. Using window.ethereum.');
-        } else {
-          console.log('[AuthService] No selection made or modal closed.');
-          return { success: false, error: "Connection cancelled or no wallet selected." };
+      if (accounts && accounts.length > 0) {
+        // Wait a moment for the connection to be fully established
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Verify the connection is stable before proceeding
+        try {
+          // Check if we can make a simple call without triggering another auth
+          const chainId = await window.silk.request({ method: 'eth_chainId' });
+          console.log(`[AuthService] Chain ID confirmed: ${chainId}`);
+        } catch (chainError) {
+          console.warn('[AuthService] Could not get chain ID, but proceeding...');
         }
         
-        console.log(`[AuthService] Creating ethers BrowserProvider from ${providerSource} source.`);
-        this.provider = new BrowserProvider(activeProvider);
-
-        console.log('[AuthService] Requesting accounts via eth_requestAccounts...');
-        const accounts = await this.provider.send('eth_requestAccounts', []);
-        console.log(`[AuthService] eth_requestAccounts response: ${JSON.stringify(accounts)}`);
-
-        if (!accounts || accounts.length === 0) {
-          throw new Error('No accounts returned from provider.');
-        }
-
-        this.signer = await this.provider.getSigner();
-        this.userAddress = await this.signer.getAddress();
-        this.isAuthenticated = true;
-        this.externalProviderUsed = providerSource;
-        console.log(`[AuthService] Connection successful (${providerSource}). Address: ${this.userAddress}`);
-        return { success: true, address: this.userAddress };
+                 // Use the accounts directly instead of relying on ethers.js internal calls
+         this.userAddress = accounts[0] || null;
+         this.isAuthenticated = true;
         
+        // Set up the provider but don't immediately create signer
+        this.provider = new BrowserProvider(window.silk);
+        
+        console.log(`[AuthService] Connection successful. Address: ${this.userAddress}`);
+        
+        // Skip event listeners for now due to API compatibility issues
+        // this.setupSilkEventListeners();
+        
+        return { success: true, address: this.userAddress || undefined };
       } else {
-        // Fallback to direct wallet connection
-        console.log('[AuthService] window.silk.loginSelector not available, trying direct connection...');
-        return await this.connectDirectly();
+        throw new Error('No accounts returned after authentication.');
       }
 
     } catch (error: any) {
-      console.error('[AuthService] Error during connectWithSelector:', error);
-      let errorMessage = "Failed to connect wallet";
+      console.error('[AuthService] Connection failed:', error);
+      
+      let errorMessage = "Failed to connect";
       if (error.message) {
         if (error.message.includes('User rejected') || error.code === 4001) {
           errorMessage = "Connection request rejected by user.";
+        } else if (error.message.includes('timeout') || error.message.includes('ping')) {
+          errorMessage = "Connection timeout - please try again";
+        } else if (error.message.includes('not been authorized')) {
+          errorMessage = "Please try connecting again - authentication may have expired.";
         } else {
           errorMessage = error.message;
         }
       }
+      
       this.resetAuthState();
       return { success: false, error: errorMessage };
     }
   }
 
-  // Alternative connection method if users want to connect directly with MetaMask
+  // Set up Silk-specific event listeners
+  private setupSilkEventListeners(): void {
+    if (window.silk) {
+      window.silk.on('accountsChanged', (accounts: string[]) => {
+        console.log('[AuthService] Silk accounts changed:', accounts);
+        if (accounts.length === 0) {
+          this.resetAuthState();
+        } else {
+          this.userAddress = accounts[0] || null;
+        }
+      });
+
+      window.silk.on('chainChanged', (chainId: string) => {
+        console.log('[AuthService] Silk chain changed:', chainId);
+      });
+
+      window.silk.on('disconnect', () => {
+        console.log('[AuthService] Silk disconnected');
+        this.resetAuthState();
+      });
+    }
+  }
+
+  // Direct wallet connection (fallback)
   async connectDirectly(): Promise<AuthResult> {
-    console.log('[AuthService] Attempting direct connection to injected wallet...');
+    console.log('[AuthService] Attempting direct wallet connection...');
     
     if (!window.ethereum) {
-      return { success: false, error: "No wallet detected. Please install MetaMask or another Ethereum wallet." };
+      return { 
+        success: false, 
+        error: "No wallet detected. Please install MetaMask or another Ethereum wallet." 
+      };
     }
 
     try {
       this.provider = new BrowserProvider(window.ethereum);
-      
-      console.log('[AuthService] Requesting accounts via eth_requestAccounts...');
       const accounts = await this.provider.send('eth_requestAccounts', []);
-      console.log(`[AuthService] eth_requestAccounts response: ${JSON.stringify(accounts)}`);
 
       if (!accounts || accounts.length === 0) {
         throw new Error('No accounts returned from wallet.');
@@ -238,13 +405,15 @@ class AuthService {
       this.signer = await this.provider.getSigner();
       this.userAddress = await this.signer.getAddress();
       this.isAuthenticated = true;
-      this.externalProviderUsed = 'injected';
       
-      console.log(`[AuthService] Direct connection successful. Address: ${this.userAddress}`);
+      this.setupEventListeners();
+      
+      console.log(`[AuthService] Direct connection successful: ${this.userAddress}`);
       return { success: true, address: this.userAddress };
 
     } catch (error: any) {
-      console.error('[AuthService] Error during direct connection:', error);
+      console.error('[AuthService] Direct connection failed:', error);
+      
       let errorMessage = "Failed to connect wallet";
       if (error.message) {
         if (error.message.includes('User rejected') || error.code === 4001) {
@@ -253,16 +422,65 @@ class AuthService {
           errorMessage = error.message;
         }
       }
+      
       this.resetAuthState();
       return { success: false, error: errorMessage };
     }
   }
 
+  // Force complete reset of Silk state
+  async forceResetSilk(): Promise<void> {
+    console.log('[AuthService] Force resetting Silk state...');
+    
+    // Disconnect current connection
+    if (window.silk) {
+      try {
+        if (window.silk.logout) {
+          await window.silk.logout();
+        }
+        if (window.silk.disconnect) {
+          await window.silk.disconnect();
+        }
+      } catch (error) {
+        console.warn('[AuthService] Error during Silk disconnect:', error);
+      }
+    }
+    
+    // Clear our state
+    this.resetAuthState();
+    
+    // Clear browser storage again
+    if (typeof window !== 'undefined') {
+      try {
+        const keysToRemove = [];
+        for (let i = 0; i < window.localStorage.length; i++) {
+          const key = window.localStorage.key(i);
+          if (key && (key.includes('silk') || key.includes('human') || key.includes('wallet') || key.includes('auth'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => {
+          console.log(`[AuthService] Force clearing localStorage key: ${key}`);
+          window.localStorage.removeItem(key);
+        });
+      } catch (error) {
+        console.warn('[AuthService] Error clearing storage:', error);
+      }
+    }
+    
+    console.log('[AuthService] Silk state reset complete.');
+  }
+
   disconnect(): void {
     console.log("[AuthService] Disconnecting...");
     this.resetAuthState();
-    // Note: Add specific logout calls if Silk or other providers require them.
-    console.log("[AuthService] Disconnect complete.");
+    
+    // If using Silk, call logout
+    if (window.silk && window.silk.logout) {
+      window.silk.logout();
+    }
+    
+    console.log("[AuthService] Disconnected.");
   }
 
   private resetAuthState(): void {
@@ -270,10 +488,30 @@ class AuthService {
     this.signer = null;
     this.userAddress = null;
     this.isAuthenticated = false;
-    this.externalProviderUsed = null;
   }
 
-  // Add other methods like signMessage if needed, adapted from your example
+  // Get current network info
+  async getNetwork(): Promise<any> {
+    if (!this.provider) return null;
+    try {
+      return await this.provider.getNetwork();
+    } catch (error) {
+      console.error('[AuthService] Error getting network:', error);
+      return null;
+    }
+  }
+
+  // Get wallet balance
+  async getBalance(): Promise<string | null> {
+    if (!this.provider || !this.userAddress) return null;
+    try {
+      const balance = await this.provider.getBalance(this.userAddress);
+      return ethers.formatEther(balance);
+    } catch (error) {
+      console.error('[AuthService] Error getting balance:', error);
+      return null;
+    }
+  }
 }
 
 // Export a singleton instance
