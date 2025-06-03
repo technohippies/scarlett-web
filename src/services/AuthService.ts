@@ -70,26 +70,26 @@ class AuthService {
         }
       }
 
-      // Configuration that enables all social logins and external wallets
+      // Configuration that enables social logins and MetaMask (no WalletConnect)
       // Based on Silk documentation, ensure the config is properly structured
-      const initOptions = {
-        walletConnectProjectId: '24700ee5f2334eb685af8af1a9842fed',
-        // Use staging environment for development to avoid CSP and production restrictions
-        useStaging: true, // Set to true for development environment
-        // Add development mode configurations
-        development: true,
-        config: {
-          allowedSocials: ['google', 'twitter', 'discord', 'linkedin', 'apple', 'github'],
-          authenticationMethods: ['email', 'phone', 'social'],  // Remove 'wallet' temporarily to avoid conflicts
-          styles: { 
-            darkMode: true 
+              const initOptions = {
+          // Removed walletConnectProjectId to disable WalletConnect completely
+          // Use staging environment for development to avoid CSP and production restrictions
+          useStaging: true, // Set to true for development environment
+          // Add development mode configurations
+          development: true,
+          config: {
+            allowedSocials: ['apple', 'github'], // Just the working social logins
+            authenticationMethods: ['wallet', 'email', 'social'],  // Wallet (MetaMask), email, and social (Apple/GitHub)
+            styles: { 
+              darkMode: true 
+            }
+          },
+          project: {
+            entryTitle: 'Learn with Scarlett 斯嘉丽 🎶',
+            name: 'Scarlett'
           }
-        },
-        project: {
-          entryTitle: 'Learn with Scarlett 斯嘉丽 🎶',
-          name: 'Scarlett'
-        }
-      };
+        };
 
       console.log("[AuthService] Initializing with config:", JSON.stringify(initOptions, null, 2));
       
@@ -290,19 +290,23 @@ class AuthService {
     try {
       console.log('[AuthService] Starting fresh connection attempt...');
       
-      // Force complete reset first
-      await this.forceResetSilk();
+      // Skip the force reset since it's causing WalletConnect errors
+      // await this.forceResetSilk();
       
-      // Wait a moment for everything to clear
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Just a brief wait
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       console.log('[AuthService] Triggering authentication modal...');
       
       // Try using the login method first, then request accounts
-      if (window.silk.login && typeof window.silk.login === 'function') {
-        console.log('[AuthService] Using silk.login() method...');
-        const loginResult = await window.silk.login();
-        console.log('[AuthService] Login result:', loginResult);
+      try {
+        if (window.silk.login && typeof window.silk.login === 'function') {
+          console.log('[AuthService] Using silk.login() method...');
+          const loginResult = await window.silk.login();
+          console.log('[AuthService] Login result:', loginResult);
+        }
+      } catch (loginError: any) {
+        console.warn('[AuthService] silk.login() failed (likely WalletConnect), continuing with eth_requestAccounts:', loginError.message);
       }
       
       // Now request accounts - this should show the full modal with all options

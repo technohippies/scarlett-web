@@ -5,7 +5,7 @@ import { authService } from "./AuthService";
 import { SubmitDeckFormData, Flashcard } from "@/components/pages/SubmitDeckPage";
 
 const STAGING_DECK_TABLE = "staging_deck_1_84532_112";
-const STAGING_FLASHCARD_TABLE = "staging_spaced_repetition_1_84532_113";
+const STAGING_FLASHCARD_TABLE = "staging_spaced_repetition_2_84532_114";
 
 interface IrysUploadResult {
   id: string;
@@ -28,7 +28,7 @@ export class SubmissionService {
   }
 
   private async switchToBaseSepolia() {
-    const signer = authService.getSigner();
+    const signer = await authService.getSigner();
     if (!signer || !signer.provider) {
       throw new Error("Wallet not connected");
     }
@@ -68,7 +68,7 @@ export class SubmissionService {
   }
 
   private async getTablelandDatabase() {
-    const signer = authService.getSigner();
+    const signer = await authService.getSigner();
     if (!signer) {
       throw new Error("Wallet not connected");
     }
@@ -189,35 +189,26 @@ export class SubmissionService {
 
       console.log("Inserting deck...");
       const deckResult = await db.prepare(deckInsertSql).bind(...deckValues).run();
-      
-      // Handle transaction waiting with proper error handling
-      try {
-        if (deckResult.meta.txn) {
-          console.log("⏳ Waiting for deck transaction to confirm...");
-          await deckResult.meta.txn.wait();
-          console.log("✅ Deck transaction confirmed");
-        }
-      } catch (waitError) {
-        console.warn("Transaction wait failed, but continuing:", waitError);
-        // Continue anyway - the transaction might still be successful
-      }
+      console.log("✅ Deck insertion submitted to Tableland")
       
       // For now, use a placeholder deck ID since getting the actual ID is complex
       // In a real app, you'd query the table to get the last inserted row ID
       const deckRowId = Date.now(); // Temporary solution
 
-      // Insert flashcards
-      console.log("Inserting flashcards...");
+      // Prepare all flashcard insertions for batching
+      console.log(`Preparing batch insertion of ${flashcardsWithCids.length} flashcards...`);
+      const flashcardStatements = [];
+      
+      const flashcardInsertSql = `
+        INSERT INTO ${STAGING_FLASHCARD_TABLE}
+        (deck_row_id, front_text, front_image_cid, front_audio_cid, front_phonetic_guide, back_text, back_image_cid, back_audio_cid, back_phonetic_guide, notes, attributes, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
       for (const card of flashcardsWithCids) {
         if (!card.front_text.trim() || !card.back_text.trim()) {
           continue; // Skip empty cards
         }
-
-        const flashcardInsertSql = `
-          INSERT INTO ${STAGING_FLASHCARD_TABLE}
-          (deck_row_id, front_text, front_image_cid, front_audio_cid, front_phonetic_guide, back_text, back_image_cid, back_audio_cid, back_phonetic_guide, notes, attributes, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
 
         const flashcardValues = [
           deckRowId,
@@ -235,16 +226,16 @@ export class SubmissionService {
           timestamp
         ];
 
-        const flashcardResult = await db.prepare(flashcardInsertSql).bind(...flashcardValues).run();
-        
-        // Handle flashcard transaction waiting
-        try {
-          if (flashcardResult.meta.txn) {
-            await flashcardResult.meta.txn.wait();
-          }
-        } catch (waitError) {
-          console.warn("Flashcard transaction wait failed, but continuing:", waitError);
-        }
+        flashcardStatements.push(
+          db.prepare(flashcardInsertSql).bind(...flashcardValues)
+        );
+      }
+
+      // Execute all flashcard insertions in a single batch
+      if (flashcardStatements.length > 0) {
+        console.log(`🚀 Batch inserting ${flashcardStatements.length} flashcards...`);
+        await db.batch(flashcardStatements);
+        console.log(`✅ Successfully batch inserted ${flashcardStatements.length} flashcards to Tableland`);
       }
 
       console.log("✅ Deck and flashcards submitted successfully!");

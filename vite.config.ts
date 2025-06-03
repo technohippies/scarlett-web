@@ -19,5 +19,7 @@ export default defineConfig({
   // Define global variables that might be needed
   define: {
     global: 'globalThis',
+    // Provide dummy WalletConnect project ID to prevent Silk SDK errors
+    'process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID': JSON.stringify('dummy-project-id'),
   },
 })
