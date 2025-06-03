@@ -1,22 +1,25 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
+import { useLocale } from "@/contexts/LocaleContext"
 
 export const Hero: React.FC = () => {
+  const { t } = useLocale();
+
   return (
     <section className="w-full flex flex-col items-start gap-8 py-16">
       <div className="max-w-3xl flex flex-col items-start gap-6">
         <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
-          Cobrowse with Scarlett AI extension
+          {t.cobrowseWithScarlett}
         </h1>
         <p className="text-xl md:text-xl text-muted-foreground">
-          Language tutor, lifecoach, friend. Free and open source.
+          {t.languageTutorDescription}
         </p>
         <div className="flex gap-4 mt-4">
           <Button size="lg" className="h-11 px-8 text-xl">
-            Chrome
+            {t.chromeBrowser}
           </Button>
           <Button size="lg" className="h-11 px-8 text-xl">
-            Firefox
+            {t.firefoxBrowser}
           </Button>
         </div>
       </div>

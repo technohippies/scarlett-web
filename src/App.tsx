@@ -10,6 +10,7 @@ import { DeckDetailPage, Flashcard } from "@/components/pages/DeckDetailsPage";
 import { Routes, Route, useParams } from 'react-router-dom';
 import { Spinner } from '@/components/ui/Spinner';
 import { submissionService } from "@/services/SubmissionService";
+import { LocaleProvider, useLocale } from "@/contexts/LocaleContext";
 
 // Component to handle deck submission
 const AddDeckPageWrapper = () => {
@@ -203,24 +204,27 @@ function App() {
      return <div className="flex justify-center items-center min-h-screen"><Spinner /></div>;
   }
 
-  const HomePage = () => (
-    <>
+  const HomePage = () => {
+    const { t } = useLocale();
+
+    return (
+      <>
         <Hero />
         <section className="text-center mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Scarlett is your supercoach</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t.scarlettSupercoach}</h2>
           <p className="text-xl md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Spaced repetition, roleplaying, productivity, and more.
+            {t.spacedRepetitionDescription}
           </p>
         </section>
 
         <section className="flex flex-col gap-12 md:gap-16 mb-12 md:mb-16">
             <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
                 <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Add flashcards to study</h3>
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">{t.addFlashcardsToStudy}</h3>
                     <p className="text-muted-foreground mb-4 text-xl">
-                        Add decks of flashcards from other users, or make your own. 
+                        {t.addFlashcardsDescription}
                     </p>
-                    <Button variant="outline">View Decks</Button>
+                    <Button variant="outline">{t.viewDecks}</Button>
                 </div>
                 <div className="flex-1 w-full md:w-auto">
                     <div className="bg-neutral-700 aspect-square rounded-lg w-full max-w-md mx-auto md:mx-0">
@@ -234,18 +238,18 @@ function App() {
                     </div>
                   </div>
                   <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Learn passively across the web</h3>
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">{t.learnPassivelyAcrossWeb}</h3>
                     <p className="text-muted-foreground text-xl">
-                      Scarlett replaces the words you're learning on the webpages you visit.
+                      {t.learnPassivelyDescription}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
                   <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Translate faster, locally</h3>
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">{t.translateFasterLocally}</h3>
                     <p className="text-muted-foreground text-xl">
-                      Right click to translate any text, which then adds it to your flashcard deck automatically.
+                      {t.translateFasterDescription}
                     </p>
                   </div>
                   <div className="flex-1 w-full md:w-auto">
@@ -260,18 +264,18 @@ function App() {
                     </div>
                   </div>
                   <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Quiz yourself daily</h3>
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">{t.quizYourselfDaily}</h3>
                     <p className="text-muted-foreground text-xl">
-                      Scarlett generates quiz questions like multiple choice to test your knowledge.
+                      {t.quizYourselfDescription}
                     </p>
                   </div>
                 </div>
                 
                 <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
                   <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Translate faster, locally</h3>
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">{t.embedEveryWebpage}</h3>
                     <p className="text-muted-foreground text-xl">
-                      Right click to translate any text, which then adds it to your flashcard deck automatically.
+                      {t.embedEveryWebpageDescription}
                     </p>
                   </div>
                   <div className="flex-1 w-full md:w-auto">
@@ -286,18 +290,21 @@ function App() {
                     </div>
                   </div>
                   <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Embed every webpage you visit</h3>
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">{t.blockSitesInFocusMode}</h3>
                     <p className="text-muted-foreground text-xl">
-                      Scarlett queues, summarizes, and embeds every page you visit. She knows you better than you know yourself.
+                      {t.blockSitesDescription}
                     </p>
                   </div>
                 </div>
                 
                 <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
                   <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Block sites during "Focus Mode"</h3>
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">{t.getVoiceAudioWithTimestamps}</h3>
                     <p className="text-muted-foreground text-xl">
-                      Find yourself visiting porn sites or social media habitually? Enable focus mode to redirect to your flashcards instead.
+                      {t.getVoiceAudioDescription}
+                    </p>
+                    <p className="text-muted-foreground text-xl mt-5">
+                      {t.getVoiceAudioSupport}
                     </p>
                   </div>
                   <div className="flex-1 w-full md:w-auto">
@@ -305,99 +312,88 @@ function App() {
                     </div>
                   </div>
                 </div>
-
+                
                 <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
                    <div className="flex-1 w-full md:w-auto md:order-first">
                     <div className="bg-neutral-700 aspect-square rounded-lg w-full max-w-md mx-auto md:mx-0">
                     </div>
                   </div>
                   <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Get voice audio with timestamps</h3>
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">{t.evadeCensorship}</h3>
                     <p className="text-muted-foreground text-xl">
-                      Setup text-to-speech with ElevenLabs to generate realistic TTS with word-level timestamps, which are ideal for learning.</p>
-                      <p className="text-muted-foreground text-xl mt-5"> Support for Orpheus, Dia, and Kokoro soon.
+                      {t.evadeCensorshipDescription}
                     </p>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
-                  <div className="flex-1 text-center md:text-left">
-                    <h3 className="text-2xl md:text-3xl font-semibold mb-3">Evade censorship</h3>
-                    <p className="text-muted-foreground text-xl">
-                      Can't access YouTube, Reddit, or Twitch? Scarlett automatically redirects you to privacy preserving frontends that you can access even without a VPN.
-                    </p>
-                  </div>
-                  <div className="flex-1 w-full md:w-auto">
-                    <div className="bg-neutral-700 aspect-square rounded-lg w-full max-w-md mx-auto md:mx-0">
-                    </div>
                   </div>
                 </div>
             </section>
 
             <section className="text-center py-12">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Download for Free</h2>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">{t.downloadForFree}</h2>
                 <p className="text-xl text-muted-foreground mb-8">
-                    Install the Scarlett browser extension
+                    {t.installScarlettExtension}
                 </p>
                 <div className="flex justify-center gap-4">
-                    <Button size="lg" className="h-11 px-8 text-xl">Chrome</Button>
-                    <Button size="lg" className="h-11 px-8 text-xl">Firefox</Button>
+                    <Button size="lg" className="h-11 px-8 text-xl">{t.chromeBrowser}</Button>
+                    <Button size="lg" className="h-11 px-8 text-xl">{t.firefoxBrowser}</Button>
                 </div>
             </section>
         </>
-  );
+    );
+  };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      {authError && (
-        <div style={{ backgroundColor: 'red', color: 'white', padding: '10px', textAlign: 'center' }}>
-          Auth Error: {authError}
+    <LocaleProvider>
+      <div className="flex flex-col min-h-screen bg-background text-foreground">
+        {authError && (
+          <div style={{ backgroundColor: 'red', color: 'white', padding: '10px', textAlign: 'center' }}>
+            Auth Error: {authError}
+          </div>
+        )}
+        {isLoadingAuth && !isInitializing && (
+           <div className="fixed top-4 right-4 bg-secondary text-secondary-foreground p-2 rounded shadow-lg z-50">
+             <Spinner /> 
+           </div>
+        )}
+        <Header 
+          loggedIn={isAuthenticated}
+          address={address || ""}
+          onConnect={isInitializing ? undefined : handleConnect}
+          onDisconnect={handleDisconnect}
+          currentLocale={currentLocale}
+          onLocaleChange={handleLocaleChange}
+        />
+        <div className="container mx-auto px-4 max-w-6xl">
+          <main className="flex-grow py-12">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              
+              <Route 
+                path="/decks"
+                element={
+                  <div>
+                      {deckError && (
+                          <div style={{ color: 'orange', marginBottom: '10px' }}>Deck Error: {deckError}</div>
+                      )}
+                      {isLoadingDecks ? (
+                          <div className="flex justify-center items-center py-10"><Spinner /></div>
+                      ) : (
+                          <DecksPage decks={decks} /> 
+                      )}
+                  </div>
+                }
+              />
+
+              <Route 
+                  path="/decks/:deckSlug"
+                  element={<DeckDetailsDataLoader />}
+              />
+
+              <Route path="/add" element={<AddDeckPageWrapper />} />
+            </Routes>
+          </main>
         </div>
-      )}
-      {isLoadingAuth && !isInitializing && (
-         <div className="fixed top-4 right-4 bg-secondary text-secondary-foreground p-2 rounded shadow-lg z-50">
-           <Spinner /> 
-         </div>
-      )}
-      <Header 
-        loggedIn={isAuthenticated}
-        address={address || ""}
-        onConnect={isInitializing ? undefined : handleConnect}
-        onDisconnect={handleDisconnect}
-        currentLocale={currentLocale}
-        onLocaleChange={handleLocaleChange}
-      />
-      <div className="container mx-auto px-4 max-w-6xl">
-        <main className="flex-grow py-12">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            
-            <Route 
-              path="/decks"
-              element={
-                <div>
-                    {deckError && (
-                        <div style={{ color: 'orange', marginBottom: '10px' }}>Deck Error: {deckError}</div>
-                    )}
-                    {isLoadingDecks ? (
-                        <div className="flex justify-center items-center py-10"><Spinner /></div>
-                    ) : (
-                        <DecksPage decks={decks} /> 
-                    )}
-                </div>
-              }
-            />
-
-            <Route 
-                path="/decks/:deckSlug"
-                element={<DeckDetailsDataLoader />}
-            />
-
-            <Route path="/add" element={<AddDeckPageWrapper />} />
-          </Routes>
-        </main>
       </div>
-    </div>
+    </LocaleProvider>
   );
 }
 

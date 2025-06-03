@@ -35,7 +35,7 @@ class AuthService {
     }
 
     try {
-      console.log("[AuthService] Initializing Silk SDK...");
+      console.log("[AuthService] Initializing basic auth service (deferring Silk until needed)...");
       
       // Clear any existing Silk-related storage first
       if (typeof window !== 'undefined') {
@@ -70,54 +70,66 @@ class AuthService {
         }
       }
 
-      // Configuration that enables social logins and MetaMask (no WalletConnect)
-      // Based on Silk documentation, ensure the config is properly structured
-              const initOptions = {
-          // Removed walletConnectProjectId to disable WalletConnect completely
-          // Use staging environment for development to avoid CSP and production restrictions
-          useStaging: true, // Set to true for development environment
-          // Add development mode configurations
-          development: true,
-          config: {
-            allowedSocials: ['apple', 'github'], // Just the working social logins
-            authenticationMethods: ['wallet', 'email', 'social'],  // Wallet (MetaMask), email, and social (Apple/GitHub)
-            styles: { 
-              darkMode: true 
-            }
-          },
-          project: {
-            entryTitle: 'Learn with Scarlett 斯嘉丽 🎶',
-            name: 'Scarlett'
-          }
-        };
-
-      console.log("[AuthService] Initializing with config:", JSON.stringify(initOptions, null, 2));
+      // Don't initialize Silk SDK here - defer until user actually wants to connect
+      // This prevents automatic wallet connection prompts on page load
       
-      // Initialize Silk SDK - this sets up window.silk
-      this.silkProvider = initSilk(initOptions as any);
-      console.log("[AuthService] Silk provider created:", this.silkProvider);
-
-      // Make it globally available (though initSilk should do this automatically)
-      if (typeof window !== 'undefined') {
-        window.silk = this.silkProvider;
-        console.log("[AuthService] Silk provider assigned to window.silk");
-        
-        // Log config after initialization
-        setTimeout(() => {
-          if (window.silk?.config) {
-            console.log("[AuthService] 🔍 Final Silk config:", JSON.stringify(window.silk.config, null, 2));
-          }
-        }, 1000);
-      }
-
-      // Check if already connected (for auto-reconnect)
-      await this.checkForExistingConnection();
+      // Don't check for existing connections either - let user manually connect
+      // await this.checkForExistingConnection();
       
     } catch (err) {
-      console.error("[AuthService] Error initializing Silk SDK:", err);
+      console.error("[AuthService] Error during basic initialization:", err);
     } finally {
       this._isInitialized = true;
-      console.log(`[AuthService] Initialization complete. Connected: ${this.isAuthenticated}, Address: ${this.userAddress}`);
+      console.log(`[AuthService] Basic initialization complete. Connected: ${this.isAuthenticated}, Address: ${this.userAddress}`);
+    }
+  }
+
+  // Initialize Silk SDK only when needed (on user's first connect attempt)
+  private async initializeSilkSDK(): Promise<void> {
+    if (this.silkProvider || window.silk) {
+      console.log("[AuthService] Silk already initialized");
+      return;
+    }
+
+    console.log("[AuthService] Initializing Silk SDK for connection...");
+    
+    // Configuration that enables social logins and MetaMask (no WalletConnect)
+    const initOptions = {
+      // Removed walletConnectProjectId to disable WalletConnect completely
+      // Use staging environment for development to avoid CSP and production restrictions
+      useStaging: true, // Set to true for development environment
+      // Add development mode configurations
+      development: true,
+      config: {
+        allowedSocials: ['apple', 'github'], // Just the working social logins
+        authenticationMethods: ['wallet', 'email', 'social'],  // Wallet (MetaMask), email, and social (Apple/GitHub)
+        styles: { 
+          darkMode: true 
+        }
+      },
+      project: {
+        entryTitle: 'Learn with Scarlett 斯嘉丽 🎶',
+        name: 'Scarlett'
+      }
+    };
+
+    console.log("[AuthService] Initializing Silk with config:", JSON.stringify(initOptions, null, 2));
+    
+    // Initialize Silk SDK - this sets up window.silk
+    this.silkProvider = initSilk(initOptions as any);
+    console.log("[AuthService] Silk provider created:", this.silkProvider);
+
+    // Make it globally available (though initSilk should do this automatically)
+    if (typeof window !== 'undefined') {
+      window.silk = this.silkProvider;
+      console.log("[AuthService] Silk provider assigned to window.silk");
+      
+      // Log config after initialization
+      setTimeout(() => {
+        if (window.silk?.config) {
+          console.log("[AuthService] 🔍 Final Silk config:", JSON.stringify(window.silk.config, null, 2));
+        }
+      }, 1000);
     }
   }
   
@@ -137,8 +149,8 @@ class AuthService {
         if (accounts && accounts.length > 0) {
           console.log(`[AuthService] Found existing Silk connection: ${accounts[0]}`);
           this.provider = new BrowserProvider(window.silk);
-          this.signer = await this.provider.getSigner();
-          this.userAddress = await this.signer.getAddress();
+          // Only get signer if we have confirmed accounts - avoid triggering connection prompts
+          this.userAddress = accounts[0];
           this.isAuthenticated = true;
           return;
         }
@@ -147,17 +159,17 @@ class AuthService {
       }
     }
     
-    // Check injected wallet (MetaMask, etc) as fallback
+    // Check injected wallet (MetaMask, etc) as fallback - but be more conservative
     if (typeof window !== 'undefined' && window.ethereum && !window.ethereum.isSilk) {
       try {
-        const browserProvider = new BrowserProvider(window.ethereum);
-        const accounts = await browserProvider.send('eth_accounts', []);
+        // Only check for existing accounts, don't trigger any connection requests
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         
         if (accounts && accounts.length > 0) {
           console.log(`[AuthService] Found existing injected wallet: ${accounts[0]}`);
-          this.provider = browserProvider;
-          this.signer = await this.provider.getSigner();
-          this.userAddress = await this.signer.getAddress();
+          this.provider = new BrowserProvider(window.ethereum);
+          // Store the address but don't get the signer yet - avoid triggering connection prompts
+          this.userAddress = accounts[0];
           this.isAuthenticated = true;
           
           this.setupEventListeners();
@@ -214,6 +226,11 @@ class AuthService {
     
     if (!this.signer) {
       try {
+        // Only get signer if we're actually authenticated and have a user address
+        if (!this.isAuthenticated || !this.userAddress) {
+          console.warn('[AuthService] Cannot get signer - not authenticated');
+          return null;
+        }
         this.signer = await this.provider.getSigner();
       } catch (error) {
         console.error('[AuthService] Error getting signer:', error);
@@ -282,9 +299,22 @@ class AuthService {
     // Debug current state
     this.debugCurrentState();
     
-    if (!this._isInitialized || !this.silkProvider || !window.silk) {
-      console.error('[AuthService] Service not initialized or Silk not available.');
+    if (!this._isInitialized) {
+      console.error('[AuthService] Service not initialized.');
       return { success: false, error: "Authentication service not ready." };
+    }
+
+    // Initialize Silk SDK now (only when user wants to connect)
+    try {
+      await this.initializeSilkSDK();
+    } catch (silkInitError) {
+      console.error('[AuthService] Failed to initialize Silk SDK:', silkInitError);
+      return { success: false, error: "Failed to initialize wallet connection service." };
+    }
+
+    if (!this.silkProvider || !window.silk) {
+      console.error('[AuthService] Silk not available after initialization.');
+      return { success: false, error: "Wallet connection service not available." };
     }
 
     try {

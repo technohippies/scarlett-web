@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useLocale } from "@/contexts/LocaleContext";
 import {
   Select,
   SelectContent,
@@ -58,6 +59,7 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
   onSubmit,
   isSubmitting = false,
 }) => {
+  const { t } = useLocale();
   const [formData, setFormData] = useState<SubmitDeckFormData>(createEmptyFormData());
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
@@ -103,18 +105,18 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
   const validateForm = (): boolean => {
     const newErrors: {[key: string]: string} = {};
     
-    if (!formData.name.trim()) newErrors.name = "Required";
-    if (!formData.description.trim()) newErrors.description = "Required";
+    if (!formData.name.trim()) newErrors.name = t.required;
+    if (!formData.description.trim()) newErrors.description = t.required;
     
     if (formData.inputMode === 'manual') {
       const validCards = formData.flashcards.filter(card => 
         card.front_text.trim() && card.back_text.trim()
       );
       if (validCards.length < 5) {
-        newErrors.flashcards = "Minimum 5 complete cards required";
+        newErrors.flashcards = t.minimumCardsRequired;
       }
     } else if (formData.inputMode === 'csv' && !formData.csvFile) {
-      newErrors.csv = "CSV file required";
+      newErrors.csv = t.csvFileRequired;
     }
     
     setErrors(newErrors);
@@ -131,16 +133,16 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Submit Deck</h1>
+        <h1 className="text-3xl font-bold mb-2">{t.submitDeck}</h1>
         <p className="text-muted-foreground">
-          Create flashcard deck for testnet review. You'll need Base Sepolia ETH, which can be acquired freely from{' '}
+          {t.createFlashcardDeck}{' '}
           <a 
             href="https://docs.base.org/chain/network-faucets" 
             target="_blank" 
             rel="noopener noreferrer"
             className="text-blue-400 hover:text-blue-300 underline"
           >
-            network faucets
+            {t.networkFaucets}
           </a>
           .
         </p>
@@ -153,7 +155,7 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
             <Input
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
-              placeholder="Deck name"
+              placeholder={t.deckName}
               disabled={isSubmitting}
               aria-invalid={!!errors.name}
             />
@@ -164,7 +166,7 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
             <Textarea
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
-              placeholder="Brief description"
+              placeholder={t.briefDescription}
               disabled={isSubmitting}
               rows={2}
               aria-invalid={!!errors.description}
@@ -179,18 +181,18 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
               disabled={isSubmitting}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Front Language" />
+                <SelectValue placeholder={t.frontLanguage} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="vi">Vietnamese</SelectItem>
-                <SelectItem value="zh">Mandarin</SelectItem>
-                <SelectItem value="de">German</SelectItem>
-                <SelectItem value="it">Italian</SelectItem>
-                <SelectItem value="pt">Portuguese</SelectItem>
-                <SelectItem value="ru">Russian</SelectItem>
-                <SelectItem value="ja">Japanese</SelectItem>
-                <SelectItem value="ko">Korean</SelectItem>
+                <SelectItem value="en">{t.english}</SelectItem>
+                <SelectItem value="vi">{t.vietnamese}</SelectItem>
+                <SelectItem value="zh">{t.mandarin}</SelectItem>
+                <SelectItem value="de">{t.german}</SelectItem>
+                <SelectItem value="it">{t.italian}</SelectItem>
+                <SelectItem value="pt">{t.portuguese}</SelectItem>
+                <SelectItem value="ru">{t.russian}</SelectItem>
+                <SelectItem value="ja">{t.japanese}</SelectItem>
+                <SelectItem value="ko">{t.korean}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -200,18 +202,18 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
               disabled={isSubmitting}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Back Language" />
+                <SelectValue placeholder={t.backLanguage} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="vi">Vietnamese</SelectItem>
-                <SelectItem value="zh">Mandarin</SelectItem>
-                <SelectItem value="de">German</SelectItem>
-                <SelectItem value="it">Italian</SelectItem>
-                <SelectItem value="pt">Portuguese</SelectItem>
-                <SelectItem value="ru">Russian</SelectItem>
-                <SelectItem value="ja">Japanese</SelectItem>
-                <SelectItem value="ko">Korean</SelectItem>
+                <SelectItem value="en">{t.english}</SelectItem>
+                <SelectItem value="vi">{t.vietnamese}</SelectItem>
+                <SelectItem value="zh">{t.mandarin}</SelectItem>
+                <SelectItem value="de">{t.german}</SelectItem>
+                <SelectItem value="it">{t.italian}</SelectItem>
+                <SelectItem value="pt">{t.portuguese}</SelectItem>
+                <SelectItem value="ru">{t.russian}</SelectItem>
+                <SelectItem value="ja">{t.japanese}</SelectItem>
+                <SelectItem value="ko">{t.korean}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -220,7 +222,7 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
         {/* Input Mode */}
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium mb-2 block">Input Method</label>
+            <label className="text-sm font-medium mb-2 block">{t.inputMethod}</label>
             <Select
               value={formData.inputMode}
               onValueChange={(value: 'manual' | 'csv') => handleInputChange("inputMode", value)}
@@ -230,8 +232,8 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="manual">✍️ Manual Entry</SelectItem>
-                <SelectItem value="csv">📄 CSV Upload</SelectItem>
+                <SelectItem value="manual">{t.manualEntry}</SelectItem>
+                <SelectItem value="csv">{t.csvUpload}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -250,8 +252,8 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
                 disabled={isSubmitting}
               />
               <label htmlFor="csv-upload" className="cursor-pointer">
-                <div className="text-lg mb-2">📄 Drop CSV or click to upload</div>
-                <div className="text-sm text-muted-foreground">Format: front_text,back_text,front_phonetic_guide,back_phonetic_guide,notes</div>
+                <div className="text-lg mb-2">{t.dropCsvOrClick}</div>
+                <div className="text-sm text-muted-foreground">{t.csvFormat}</div>
               </label>
             </div>
             {formData.csvFile && (
@@ -262,23 +264,23 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
         ) : (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Flashcards</h2>
+              <h2 className="text-xl font-semibold">{t.flashcards}</h2>
             </div>
 
             {formData.flashcards.map((card, index) => (
               <div key={card.id} className="border border-neutral-700 rounded-lg p-6 space-y-4 relative bg-neutral-900/20 hover:bg-neutral-900/30 transition-colors">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-muted-foreground">Card {index + 1}</h3>
+                  <h3 className="font-medium text-muted-foreground">{t.card} {index + 1}</h3>
                   {formData.flashcards.length > 5 && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => removeCard(card.id)}
-                      disabled={isSubmitting}
-                    >
-                      Remove
-                    </Button>
+                                              disabled={isSubmitting}
+                      >
+                        {t.remove}
+                      </Button>
                   )}
                 </div>
                 
@@ -287,13 +289,13 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
                     <Input
                       value={card.front_text}
                       onChange={(e) => handleCardChange(card.id, 'front_text', e.target.value)}
-                      placeholder="Front text"
+                      placeholder={t.frontText}
                       disabled={isSubmitting}
                     />
                     <Input
                       value={card.front_phonetic_guide || ''}
                       onChange={(e) => handleCardChange(card.id, 'front_phonetic_guide', e.target.value)}
-                      placeholder="Phonetic guide (optional)"
+                      placeholder={t.phoneticGuideOptional}
                       disabled={isSubmitting}
                     />
                   </div>
@@ -302,13 +304,13 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
                     <Input
                       value={card.back_text}
                       onChange={(e) => handleCardChange(card.id, 'back_text', e.target.value)}
-                      placeholder="Back text"
+                      placeholder={t.backText}
                       disabled={isSubmitting}
                     />
                     <Input
                       value={card.back_phonetic_guide || ''}
                       onChange={(e) => handleCardChange(card.id, 'back_phonetic_guide', e.target.value)}
-                      placeholder="Phonetic guide (optional)"
+                      placeholder={t.phoneticGuideOptional}
                       disabled={isSubmitting}
                     />
                   </div>
@@ -318,7 +320,7 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
                   <Textarea
                     value={card.notes || ''}
                     onChange={(e) => handleCardChange(card.id, 'notes', e.target.value)}
-                    placeholder="Notes (optional)"
+                    placeholder={t.notesOptional}
                     disabled={isSubmitting}
                     rows={2}
                   />
@@ -335,7 +337,7 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
               disabled={isSubmitting}
               className="w-full h-10"
             >
-              + Add Card
+              {t.addCard}
             </Button>
           </div>
         )}
@@ -347,7 +349,7 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
             className="w-full h-12 text-lg bg-primary hover:bg-primary/90 text-primary-foreground" 
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Submitting..." : "Submit Deck"}
+            {isSubmitting ? t.submitting : t.submitDeck}
           </Button>
         </div>
       </form>

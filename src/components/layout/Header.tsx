@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Plus, Cards } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
+import { useLocale } from "@/contexts/LocaleContext"
 import {
   Select,
   SelectContent,
@@ -34,10 +35,19 @@ export const Header: React.FC<HeaderProps> = ({
   onConnect,
   onDisconnect,
   locales = [{value: 'en', label: 'EN'}, {value: 'vi', label: 'VI'}, {value: 'zh', label: 'ZH'}], 
-  currentLocale = 'en',
+  currentLocale,
   onLocaleChange,
   // Removed destructuring of old props
 }) => {
+  const { locale, setLocale, t } = useLocale();
+  const activeLocale = currentLocale || locale;
+  
+  const handleLocaleChange = (newLocale: string) => {
+    setLocale(newLocale);
+    if (onLocaleChange) {
+      onLocaleChange(newLocale);
+    }
+  };
   return (
     <header
       className={cn(
@@ -58,13 +68,13 @@ export const Header: React.FC<HeaderProps> = ({
               <Link to="/decks">
                 <Button variant="ghost" size="sm" className="font-medium">
                   <Cards size={18} className="mr-1" />
-                  Decks
+                  {t.decks}
                 </Button>
               </Link>
               <Link to="/add">
                 <Button variant="ghost" size="sm" className="font-medium">
                   <Plus size={18} className="mr-1" />
-                  Add
+                  {t.add}
                 </Button>
               </Link>
             </nav>
@@ -72,14 +82,14 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <div className="mr-2">
-            <Select value={currentLocale} onValueChange={onLocaleChange}>
+            <Select value={activeLocale} onValueChange={handleLocaleChange}>
               <SelectTrigger className="w-[80px] h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {locales.map(locale => (
-                  <SelectItem key={locale.value} value={locale.value}>
-                    {locale.label}
+                {locales.map(localeOption => (
+                  <SelectItem key={localeOption.value} value={localeOption.value}>
+                    {localeOption.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -91,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {truncateAddress(address)}
               </Button>
               <Button variant="ghost" size="sm" onClick={onDisconnect} className="text-xs px-2 py-1 h-auto">
-                Disconnect
+                {t.disconnect}
               </Button>
             </div>
           ) : (
@@ -101,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onConnect}
               disabled={!onConnect}
             >
-              {onConnect ? "Connect" : "Loading..."}
+              {onConnect ? t.connect : t.loading}
             </Button>
           )}
         </div>
