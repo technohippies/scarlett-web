@@ -481,7 +481,7 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
 
       <div className="mt-6 p-4 bg-muted rounded-lg">
         <p className="text-sm text-muted-foreground">
-          Free testnet submission • Media files uploaded to Irys • Quality decks promoted to mainnet
+          Free testnet submission • Media files uploaded to Tableland (Irys integration coming soon) • Quality decks promoted to mainnet
         </p>
       </div>
     </div>

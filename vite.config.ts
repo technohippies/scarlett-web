@@ -21,6 +21,11 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Polyfill Node.js core modules exactly as per Irys docs
+      crypto: "crypto-browserify",
+      stream: "stream-browserify", 
+      os: "os-browserify/browser",
+      path: "path-browserify",
     },
   },
   server: {
@@ -32,6 +37,8 @@ export default defineConfig({
   // Define global variables that might be needed
   define: {
     global: 'globalThis',
+    // Fix for crypto-browserify process.version undefined error
+    'process.version': JSON.stringify('v18.0.0'),
     // Provide dummy WalletConnect project ID to prevent Silk SDK errors
     'process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID': JSON.stringify('dummy-project-id'),
   },

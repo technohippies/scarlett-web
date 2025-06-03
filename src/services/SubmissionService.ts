@@ -1,4 +1,8 @@
 import { Database, helpers } from "@tableland/sdk";
+import { WebUploader } from "@irys/web-upload";
+import { WebEthereum } from "@irys/web-upload-ethereum";
+import { EthersV6Adapter } from "@irys/web-upload-ethereum-ethers-v6";
+import { ethers } from "ethers";
 import { authService } from "./AuthService";
 import { SubmitDeckFormData, Flashcard } from "@/components/pages/SubmitDeckPage";
 
@@ -12,19 +16,10 @@ interface IrysUploadResult {
 
 export class SubmissionService {
     private async getIrysUploader() {
-    // For now, return a mock uploader to avoid browser compatibility issues
-    console.log("Using mock Irys uploader for testing");
-    return {
-      upload: async (data: any, options?: any) => {
-        console.log(`Mock uploading ${data.length} bytes with options:`, options);
-        // Return a mock response that matches Irys format
-        return {
-          id: `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          timestamp: Date.now(),
-          size: data.length
-        };
-      }
-    };
+    // REAL Irys implementation following their React + Vite docs EXACTLY
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const irysUploader = await WebUploader(WebEthereum).withAdapter(EthersV6Adapter(provider));
+    return irysUploader;
   }
 
   private async switchToBaseSepolia() {
@@ -109,9 +104,9 @@ export class SubmissionService {
     const irysUploader = await this.getIrysUploader();
     
     try {
-      // Convert File to mock data
+      // Convert File to Buffer for REAL Irys upload
       const arrayBuffer = await file.arrayBuffer();
-      const fileBuffer = new Uint8Array(arrayBuffer);
+      const fileBuffer = Buffer.from(arrayBuffer);
       
       // Create tags for the file
       const tags = [
