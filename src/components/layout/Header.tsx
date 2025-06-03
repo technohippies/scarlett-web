@@ -3,7 +3,6 @@ import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Plus, Cards } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
-import reactLogo from "@/assets/react.svg"
 import {
   Select,
   SelectContent,
@@ -34,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({
   address = "",
   onConnect,
   onDisconnect,
-  locales = [{value: 'en', label: 'EN'}, {value: 'es', label: 'ES'}, {value: 'fr', label: 'FR'}], 
+  locales = [{value: 'en', label: 'EN'}, {value: 'vi', label: 'VI'}, {value: 'zh', label: 'ZH'}], 
   currentLocale = 'en',
   onLocaleChange,
   // Removed destructuring of old props
@@ -45,13 +44,13 @@ export const Header: React.FC<HeaderProps> = ({
         "w-full h-14 bg-background/80 backdrop-blur z-30",
       )}
     >
-      <div className="container mx-auto px-4 max-w-6xl h-full flex items-center justify-between">
+      <div className="container mx-auto px-4 max-w-6xl h-full flex items-center justify-between mt-10">
         <div className="flex items-center gap-6 min-w-0">
           <Link to="/">
             <img 
-              src={reactLogo} 
-              alt="Logo" 
-              className="h-8 w-8 cursor-pointer" 
+              src="/scarlett-logo.png" 
+              alt="Scarlett Logo" 
+              className="h-16 w-16 cursor-pointer" 
             />
           </Link>
           {loggedIn && (

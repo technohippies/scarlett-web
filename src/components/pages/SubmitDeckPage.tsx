@@ -49,7 +49,7 @@ const createEmptyFormData = (): SubmitDeckFormData => ({
   name: "",
   description: "",
   frontLanguage: "en",
-  backLanguage: "es",
+  backLanguage: "vi",
   inputMode: 'manual',
   flashcards: Array.from({ length: 5 }, createEmptyCard),
 });
@@ -133,7 +133,16 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Submit Deck</h1>
         <p className="text-muted-foreground">
-          Create flashcard deck for testnet review
+          Create flashcard deck for testnet review. You'll need Base Sepolia ETH, which can be acquired freely from{' '}
+          <a 
+            href="https://docs.base.org/chain/network-faucets" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-300 underline"
+          >
+            network faucets
+          </a>
+          .
         </p>
       </div>
 
@@ -174,15 +183,14 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="en">English</SelectItem>
-                <SelectItem value="es">Spanish</SelectItem>
-                <SelectItem value="fr">French</SelectItem>
+                <SelectItem value="vi">Vietnamese</SelectItem>
+                <SelectItem value="zh">Mandarin</SelectItem>
                 <SelectItem value="de">German</SelectItem>
                 <SelectItem value="it">Italian</SelectItem>
                 <SelectItem value="pt">Portuguese</SelectItem>
                 <SelectItem value="ru">Russian</SelectItem>
                 <SelectItem value="ja">Japanese</SelectItem>
                 <SelectItem value="ko">Korean</SelectItem>
-                <SelectItem value="zh">Chinese</SelectItem>
               </SelectContent>
             </Select>
 
@@ -196,15 +204,14 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="en">English</SelectItem>
-                <SelectItem value="es">Spanish</SelectItem>
-                <SelectItem value="fr">French</SelectItem>
+                <SelectItem value="vi">Vietnamese</SelectItem>
+                <SelectItem value="zh">Mandarin</SelectItem>
                 <SelectItem value="de">German</SelectItem>
                 <SelectItem value="it">Italian</SelectItem>
                 <SelectItem value="pt">Portuguese</SelectItem>
                 <SelectItem value="ru">Russian</SelectItem>
                 <SelectItem value="ja">Japanese</SelectItem>
                 <SelectItem value="ko">Korean</SelectItem>
-                <SelectItem value="zh">Chinese</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -256,18 +263,10 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Flashcards</h2>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addCard}
-                disabled={isSubmitting}
-              >
-                + Add Card
-              </Button>
             </div>
 
             {formData.flashcards.map((card, index) => (
-              <div key={card.id} className="border border-border/50 rounded-lg p-6 space-y-4 relative bg-card/20 hover:bg-card/30 transition-colors">
+              <div key={card.id} className="border border-neutral-700 rounded-lg p-6 space-y-4 relative bg-neutral-900/20 hover:bg-neutral-900/30 transition-colors">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium text-muted-foreground">Card {index + 1}</h3>
                   {formData.flashcards.length > 5 && (
@@ -328,6 +327,16 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
             ))}
             
             {errors.flashcards && <p className="text-sm text-destructive">{errors.flashcards}</p>}
+            
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addCard}
+              disabled={isSubmitting}
+              className="w-full h-10"
+            >
+              + Add Card
+            </Button>
           </div>
         )}
 
@@ -335,7 +344,7 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
         <div className="border-t border-border/50 pt-6">
           <Button 
             type="submit" 
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" 
+            className="w-full h-12 text-lg bg-primary hover:bg-primary/90 text-primary-foreground" 
             disabled={isSubmitting}
           >
             {isSubmitting ? "Submitting..." : "Submit Deck"}

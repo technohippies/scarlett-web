@@ -9,7 +9,7 @@ export const Hero: React.FC = () => {
           Cobrowse with Scarlett AI extension
         </h1>
         <p className="text-xl md:text-xl text-muted-foreground">
-          Language tutor, pirate, lifecoach. Free and open source.
+          Language tutor, lifecoach, friend. Free and open source.
         </p>
         <div className="flex gap-4 mt-4">
           <Button size="lg" className="h-11 px-8 text-xl">
