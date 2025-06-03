@@ -9,6 +9,7 @@ import { fetchAllDecks, fetchDeckBySlug, fetchCardsForDeck } from "@/services/Ta
 import { DeckDetailPage, Flashcard } from "@/components/pages/DeckDetailsPage";
 import { Routes, Route, useParams } from 'react-router-dom';
 import { Spinner } from '@/components/ui/Spinner';
+import { submissionService } from "@/services/SubmissionService";
 
 // Component to handle deck submission
 const AddDeckPageWrapper = () => {
@@ -17,22 +18,12 @@ const AddDeckPageWrapper = () => {
   const handleSubmit = async (data: SubmitDeckFormData) => {
     setIsSubmitting(true);
     try {
-      console.log('Step 1: Uploading media files to Irys...');
-      // TODO: Upload media files to Irys and get URLs
-      
-      console.log('Step 2: Submitting deck to Tableland:', {
-        deck: { name: data.name, description: data.description, languages: `${data.frontLanguage}→${data.backLanguage}` },
-        mode: data.inputMode,
-        cardCount: data.inputMode === 'manual' ? data.flashcards.length : 'CSV',
-        mediaFiles: data.inputMode === 'manual' ? data.flashcards.filter(c => c.frontFile || c.backFile).length : 'Unknown'
-      });
-      
-      // Simulate upload process
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      console.log('🚀 Starting deck submission...');
+      await submissionService.submitDeck(data);
       alert(`✅ Deck "${data.name}" submitted to testnet for review!`);
     } catch (error) {
       console.error('Error submitting deck:', error);
-      alert('❌ Upload failed. Please try again.');
+      alert(`❌ Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
