@@ -137,53 +137,7 @@ class AuthService {
     return this._isInitialized;
   }
 
-  // Check for existing wallet connections (for auto-reconnect)
-  private async checkForExistingConnection(): Promise<void> {
-    console.log('[AuthService] Checking for existing wallet connection...');
-    
-    // First check if Silk has an existing session
-    if (window.silk) {
-      try {
-        // Try to get accounts without triggering login modal
-        const accounts = await window.silk.request({ method: 'eth_accounts' });
-        if (accounts && accounts.length > 0) {
-          console.log(`[AuthService] Found existing Silk connection: ${accounts[0]}`);
-          this.provider = new BrowserProvider(window.silk);
-          // Only get signer if we have confirmed accounts - avoid triggering connection prompts
-          this.userAddress = accounts[0];
-          this.isAuthenticated = true;
-          return;
-        }
-      } catch (error) {
-        console.log('[AuthService] No existing Silk connection');
-      }
-    }
-    
-    // Check injected wallet (MetaMask, etc) as fallback - but be more conservative
-    if (typeof window !== 'undefined' && window.ethereum && !window.ethereum.isSilk) {
-      try {
-        // Only check for existing accounts, don't trigger any connection requests
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        
-        if (accounts && accounts.length > 0) {
-          console.log(`[AuthService] Found existing injected wallet: ${accounts[0]}`);
-          this.provider = new BrowserProvider(window.ethereum);
-          // Store the address but don't get the signer yet - avoid triggering connection prompts
-          this.userAddress = accounts[0];
-          this.isAuthenticated = true;
-          
-          this.setupEventListeners();
-          return;
-        } else {
-          console.log('[AuthService] Injected wallet found but no accounts authorized.');
-        }
-      } catch (error) {
-        console.error('[AuthService] Error checking injected wallet:', error);
-      }
-    }
-    
-    console.log('[AuthService] No existing connection found.');
-  }
+
 
   // Set up event listeners for wallet changes
   private setupEventListeners(): void {
