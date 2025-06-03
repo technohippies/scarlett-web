@@ -153,24 +153,92 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
     }
   };
 
-  const FileDropZone = ({ onFileChange, accept, label }: {
+  const FileDropZone = ({ onFileChange, accept, label, currentFile }: {
     onFileChange: (file: File | null) => void;
     accept: string;
     label: string;
-  }) => (
-    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center hover:border-muted-foreground/50 transition-colors">
-      <input
-        type="file"
-        accept={accept}
-        onChange={(e) => onFileChange(e.target.files?.[0] || null)}
-        className="hidden"
-        id={`file-${Math.random()}`}
-      />
-      <label htmlFor={`file-${Math.random()}`} className="cursor-pointer text-sm text-muted-foreground">
-        {label}
-      </label>
-    </div>
-  );
+    currentFile?: File;
+  }) => {
+    const fileId = `file-${Math.random().toString(36).substr(2, 9)}`;
+    const [isDragOver, setIsDragOver] = useState(false);
+    
+    const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(true);
+    };
+    
+    const handleDragLeave = (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+    };
+    
+    const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        const file = files[0];
+        // Check if file type matches accept
+        if (accept === 'image/*' && file.type.startsWith('image/')) {
+          onFileChange(file);
+        } else if (accept === 'audio/*' && file.type.startsWith('audio/')) {
+          onFileChange(file);
+        } else if (accept === '.csv' && file.name.endsWith('.csv')) {
+          onFileChange(file);
+        }
+      }
+    };
+    
+    return (
+      <div 
+        className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer ${
+          isDragOver 
+            ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' 
+            : currentFile 
+              ? 'border-green-500 bg-green-50 dark:bg-green-950' 
+              : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+        }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <input
+          type="file"
+          accept={accept}
+          onChange={(e) => onFileChange(e.target.files?.[0] || null)}
+          className="hidden"
+          id={fileId}
+        />
+        <label htmlFor={fileId} className="cursor-pointer text-sm block">
+          <div className={
+            isDragOver 
+              ? 'text-blue-700 dark:text-blue-300'
+              : currentFile 
+                ? 'text-green-700 dark:text-green-300' 
+                : 'text-muted-foreground'
+          }>
+            {isDragOver 
+              ? '📎 Drop file here' 
+              : currentFile 
+                ? `✓ ${currentFile.name}` 
+                : label
+            }
+          </div>
+          {currentFile && !isDragOver && (
+            <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+              Click to change or drag new file
+            </div>
+          )}
+          {!currentFile && !isDragOver && (
+            <div className="text-xs text-muted-foreground mt-1">
+              Click or drag to upload
+            </div>
+          )}
+        </label>
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -331,11 +399,13 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
                          onFileChange={(file) => handleFileChange(card.id, 'frontImageFile', file)}
                          accept="image/*"
                          label="📸 Image"
+                         currentFile={card.frontImageFile}
                        />
                        <FileDropZone
                          onFileChange={(file) => handleFileChange(card.id, 'frontAudioFile', file)}
                          accept="audio/*"
                          label="🎵 Audio"
+                         currentFile={card.frontAudioFile}
                        />
                      </div>
                    </div>
@@ -358,11 +428,13 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
                          onFileChange={(file) => handleFileChange(card.id, 'backImageFile', file)}
                          accept="image/*"
                          label="📸 Image"
+                         currentFile={card.backImageFile}
                        />
                        <FileDropZone
                          onFileChange={(file) => handleFileChange(card.id, 'backAudioFile', file)}
                          accept="audio/*"
                          label="🎵 Audio"
+                         currentFile={card.backAudioFile}
                        />
                      </div>
                    </div>

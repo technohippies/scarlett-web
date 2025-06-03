@@ -1,6 +1,4 @@
 import { Database, helpers } from "@tableland/sdk";
-import { Uploader } from "@irys/upload";
-import { BaseEth } from "@irys/upload-ethereum";
 import { authService } from "./AuthService";
 import { SubmitDeckFormData, Flashcard } from "@/components/pages/SubmitDeckPage";
 
@@ -13,15 +11,17 @@ interface IrysUploadResult {
 }
 
 export class SubmissionService {
-  private async getIrysUploader() {
-    // For now, let's use a mock uploader until we can fix the API usage
+    private async getIrysUploader() {
+    // For now, return a mock uploader to avoid browser compatibility issues
+    console.log("Using mock Irys uploader for testing");
     return {
-      uploadFile: async (file: File) => {
-        console.log(`Mock uploading file: ${file.name}`);
-        // Return a mock CID for testing
-        return { 
-          id: `mock_cid_${Date.now()}_${file.name}`,
-          timestamp: Date.now()
+      upload: async (data: any, options?: any) => {
+        console.log(`Mock uploading ${data.length} bytes with options:`, options);
+        // Return a mock response that matches Irys format
+        return {
+          id: `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          timestamp: Date.now(),
+          size: data.length
         };
       }
     };
@@ -109,9 +109,20 @@ export class SubmissionService {
     const irysUploader = await this.getIrysUploader();
     
     try {
-      const result: IrysUploadResult = await irysUploader.uploadFile(file);
+      // Convert File to mock data
+      const arrayBuffer = await file.arrayBuffer();
+      const fileBuffer = new Uint8Array(arrayBuffer);
       
-      console.log(`File uploaded to Irys: ${result.id}`);
+      // Create tags for the file
+      const tags = [
+        { name: "Content-Type", value: file.type },
+        { name: "Application", value: "Scarlett-Flashcards" },
+        { name: "File-Name", value: file.name }
+      ];
+      
+      const result = await irysUploader.upload(fileBuffer, { tags });
+      
+      console.log(`📁 File "${file.name}" uploaded to Irys: ${result.id}`);
       return result.id;
     } catch (error) {
       console.error("Error uploading to Irys:", error);
