@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Hero } from "@/components/layout/Hero";
 import { DecksPage, Deck } from "@/components/pages/DecksPage";
 import { SubmitDeckPage, SubmitDeckFormData } from "@/components/pages/SubmitDeckPage";
-import { PrivacyPolicyPage } from "@/components/pages/PrivacyPolicyPage";
 import { useState, useEffect, useCallback } from "react";
 import { authService, AuthResult } from "@/services/AuthService";
 import { fetchAllDecks, fetchDeckBySlug, fetchCardsForDeck } from "@/services/TablelandService";
@@ -390,7 +389,6 @@ function App() {
               />
 
               <Route path="/add" element={<AddDeckPageWrapper />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             </Routes>
           </main>
         </div>
