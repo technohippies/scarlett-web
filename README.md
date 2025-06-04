@@ -16,7 +16,9 @@ React 19, TypeScript, Vite, Tableland SDK, ethers.js, Silk Wallet SDK
 
 ## Quick Start
 
-```bash
+```bashupdate it , i made some minor changes
+
+
 git clone https://github.com/technohippies/scarlett-web.git
 cd scarlett-web
 npm install

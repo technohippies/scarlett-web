@@ -277,10 +277,10 @@ export const SubmitDeckPage: React.FC<SubmitDeckPageProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() => removeCard(card.id)}
-                                              disabled={isSubmitting}
-                      >
+                      disabled={isSubmitting}
+                    >
                         {t.remove}
-                      </Button>
+                    </Button>
                   )}
                 </div>
                 

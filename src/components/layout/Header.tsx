@@ -63,22 +63,29 @@ export const Header: React.FC<HeaderProps> = ({
               className="h-16 w-16 cursor-pointer" 
             />
           </Link>
-          {loggedIn && (
-            <nav className="flex items-center gap-2 md:gap-4">
-              <Link to="/decks">
-                <Button variant="ghost" size="sm" className="font-medium">
-                  <Cards size={18} className="mr-1" />
-                  {t.decks}
-                </Button>
-              </Link>
-              <Link to="/add">
-                <Button variant="ghost" size="sm" className="font-medium">
-                  <Plus size={18} className="mr-1" />
-                  {t.add}
-                </Button>
-              </Link>
-            </nav>
-          )}
+          <nav className="flex items-center gap-2 md:gap-4">
+            {loggedIn && (
+              <>
+                <Link to="/decks">
+                  <Button variant="ghost" size="sm" className="font-medium">
+                    <Cards size={18} className="mr-1" />
+                    {t.decks}
+                  </Button>
+                </Link>
+                <Link to="/add">
+                  <Button variant="ghost" size="sm" className="font-medium">
+                    <Plus size={18} className="mr-1" />
+                    {t.add}
+                  </Button>
+                </Link>
+              </>
+            )}
+            <Link to="/privacy-policy">
+              <Button variant="ghost" size="sm" className="font-medium text-muted-foreground">
+                {t.privacyPolicy}
+              </Button>
+            </Link>
+          </nav>
         </div>
         <div className="flex items-center gap-2">
           <div className="mr-2">
