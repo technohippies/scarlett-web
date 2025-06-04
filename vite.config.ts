@@ -8,6 +8,22 @@ export default defineConfig({
     react(), 
     tailwindcss(),
   ],
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        404: path.resolve(__dirname, 'public/404.html')
+      },
+      output: {
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name === '404.html') {
+            return '404.html';
+          }
+          return 'assets/[name]-[hash][extname]';
+        }
+      }
+    }
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

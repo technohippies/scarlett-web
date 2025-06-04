@@ -80,11 +80,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </Link>
               </>
             )}
-            <Link to="/privacy-policy">
-              <Button variant="ghost" size="sm" className="font-medium text-muted-foreground">
-                {t.privacyPolicy}
-              </Button>
-            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-2">
