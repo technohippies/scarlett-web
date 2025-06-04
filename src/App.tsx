@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback } from "react";
 import { authService, AuthResult } from "@/services/AuthService";
 import { fetchAllDecks, fetchDeckBySlug, fetchCardsForDeck } from "@/services/TablelandService";
 import { DeckDetailPage, Flashcard } from "@/components/pages/DeckDetailsPage";
-import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, useParams } from 'react-router-dom';
 import { Spinner } from '@/components/ui/Spinner';
 import { submissionService } from "@/services/SubmissionService";
 import { LocaleProvider, useLocale } from "@/contexts/LocaleContext";
@@ -98,7 +98,6 @@ const DeckDetailsDataLoader = () => {
 };
 
 function App() {
-  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [address, setAddress] = useState<string | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState<boolean>(true);
@@ -127,14 +126,7 @@ function App() {
       });
   }, []);
 
-  // Handle IPFS redirect path
-  useEffect(() => {
-    const redirectPath = sessionStorage.getItem('redirectPath');
-    if (redirectPath && redirectPath !== '/') {
-      sessionStorage.removeItem('redirectPath');
-      navigate(redirectPath, { replace: true });
-    }
-  }, [navigate]);
+
 
   useEffect(() => {
     const loadDecks = async () => {
